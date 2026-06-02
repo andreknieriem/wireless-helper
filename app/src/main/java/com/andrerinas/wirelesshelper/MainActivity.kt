@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvConnectionModeValue: TextView
     private lateinit var layoutStaticIp: View
     private lateinit var tvStaticIpValue: TextView
+    private lateinit var layoutHotspotCredentials: View
+    private lateinit var tvHotspotCredentialsValue: TextView
     private lateinit var layoutAutoStart: View
     private lateinit var tvAutoStartValue: TextView
     private lateinit var layoutBluetoothDevice: View
@@ -168,6 +170,8 @@ class MainActivity : AppCompatActivity() {
         tvConnectionModeValue = findViewById(R.id.tvConnectionModeValue)
         layoutStaticIp = findViewById(R.id.layoutStaticIp)
         tvStaticIpValue = findViewById(R.id.tvStaticIpValue)
+        layoutHotspotCredentials = findViewById(R.id.layoutHotspotCredentials)
+        tvHotspotCredentialsValue = findViewById(R.id.tvHotspotCredentialsValue)
         layoutAutoStart = findViewById(R.id.layoutAutoStart)
         tvAutoStartValue = findViewById(R.id.tvAutoStartValue)
         layoutBluetoothDevice = findViewById(R.id.layoutBluetoothDevice)
@@ -202,7 +206,8 @@ class MainActivity : AppCompatActivity() {
         layoutLanguage.setOnClickListener { showLanguageSelector() }
 
         layoutStaticIp.setOnClickListener { showStaticIpDialog() }
-        
+        layoutHotspotCredentials.setOnClickListener { showHotspotCredentialsDialog() }
+
         layoutExportLog.setOnClickListener { exportLogs() }
 
         btnToggleService.setOnClickListener {
@@ -326,6 +331,45 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
         val ip = prefs.getString("static_ip_address", "") ?: ""
         tvStaticIpValue.text = if (ip.isEmpty()) getString(R.string.not_set) else ip
+    }
+
+    private fun showHotspotCredentialsDialog() {
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        val securePrefs = com.andrerinas.wirelesshelper.utils.Prefs.getSecure(this)
+        val currentSsid = prefs.getString("hotspot_ssid", "") ?: ""
+        val currentPassword = securePrefs.getString("hotspot_password", "") ?: ""
+
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.layout_hotspot_credentials_dialog, null)
+        val etSsid = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.et_hotspot_ssid)
+        val etPassword = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.et_hotspot_password)
+
+        etSsid.setText(currentSsid)
+        etPassword.setText(currentPassword)
+
+        MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
+            .setTitle(R.string.hotspot_credentials_dialog_title)
+            .setMessage(R.string.hotspot_credentials_dialog_msg)
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val newSsid = etSsid.text.toString().trim()
+                val newPassword = etPassword.text.toString()
+                prefs.edit { putString("hotspot_ssid", newSsid) }
+                securePrefs.edit { putString("hotspot_password", newPassword) }
+                updateHotspotCredentialsDisplay()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.reset) { _, _ ->
+                prefs.edit { remove("hotspot_ssid") }
+                securePrefs.edit { remove("hotspot_password") }
+                updateHotspotCredentialsDisplay()
+            }
+            .show()
+    }
+
+    private fun updateHotspotCredentialsDisplay() {
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        val ssid = prefs.getString("hotspot_ssid", "") ?: ""
+        tvHotspotCredentialsValue.text = if (ssid.isEmpty()) getString(R.string.not_set) else ssid
     }
 
     private fun showBluetoothDeviceSelector() {
@@ -480,6 +524,7 @@ class MainActivity : AppCompatActivity() {
         tvConnectionModeValue.text = connectionModes.getOrElse(connMode) { connectionModes[0] }
         updateModeSpecificUI(connMode)
         updateStaticIpDisplay()
+        updateHotspotCredentialsDisplay()
         val autoMode = prefs.getInt("auto_start_mode", 0)
         updateAutoStartUI(autoMode)
         updateBluetoothValueDisplay()
@@ -544,6 +589,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateModeSpecificUI(mode: Int) {
         layoutHotspotForceStop.visibility = if (mode == MODE_HOTSPOT_PHONE) View.VISIBLE else View.GONE
         layoutStaticIp.visibility = if (mode == MODE_PASSIVE) View.VISIBLE else View.GONE
+        layoutHotspotCredentials.visibility = if (mode == MODE_PASSIVE) View.VISIBLE else View.GONE
         layoutWifiDirectName.visibility = if (mode == MODE_WIFI_DIRECT) View.VISIBLE else View.GONE
         // For nearby, we might want to hide other things or show a specific hint in the future.
     }
