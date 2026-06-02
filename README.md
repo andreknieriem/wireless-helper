@@ -52,6 +52,11 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.8.0
+- Added: Auto-Connect to Tablet Hotmode mode. Thanks to @BackSlasher
+- Added: QR Code scanner for easy connection in Tablet Hotspot Mode
+- Fixed czech translation. Thanks to @teodortomas
+
 ### v1.7.0
 - Enhanced: Bluetooth list now shows warning if BT is turned off
 - Enhanced: If Wifi is off, the helper now waits for Wifi to be turned on
