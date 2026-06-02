@@ -31,6 +31,9 @@ import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
 import java.io.File
 import java.io.FileOutputStream
 
@@ -72,6 +75,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var layoutExportLog: View
     private lateinit var tvVersionValue: TextView
     private lateinit var layoutAbout: View
+    private lateinit var layoutScanQrCode: View
+
+    private val scannerOptions by lazy {
+        GmsBarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .enableAutoZoom()
+            .build()
+    }
+    private val scannerClient by lazy {
+        GmsBarcodeScanning.getClient(this, scannerOptions)
+    }
 
     private var isServiceRunning = false
     private var lastRunningState: Boolean? = null
@@ -187,6 +201,7 @@ class MainActivity : AppCompatActivity() {
         layoutExportLog = findViewById(R.id.layoutExportLog)
         tvVersionValue = findViewById(R.id.tvVersionValue)
         layoutAbout = findViewById(R.id.layoutAbout)
+        layoutScanQrCode = findViewById(R.id.layoutScanQrCode)
         tvVersionValue.text = BuildConfig.VERSION_NAME
     }
 
@@ -278,6 +293,7 @@ class MainActivity : AppCompatActivity() {
         setupSwitchSetting(layoutBtDisconnectStop, switchBtDisconnectStop, "bt_disconnect_stop")
         layoutWifiNetwork.setOnClickListener { showWifiSelector() }
         layoutWifiDirectName.setOnClickListener { showWifiDirectNameSelector() }
+        layoutScanQrCode.setOnClickListener { startQrCodeScan() }
     }
 
     private fun setupSwitchSetting(layout: View, switch: androidx.appcompat.widget.SwitchCompat, prefKey: String) {
@@ -970,6 +986,7 @@ class MainActivity : AppCompatActivity() {
         if (ssid != null) {
             val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
             prefs.edit {
+                putInt("connection_mode", 2) // Auto-switch to Tablet Hotspot / Passive Mode
                 val ssids = prefs.getStringSet("auto_start_wifi_ssids", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
                 ssids.add(ssid)
                 putStringSet("auto_start_wifi_ssids", ssids)
@@ -984,7 +1001,156 @@ class MainActivity : AppCompatActivity() {
 
             Toast.makeText(this, "Configured WiFi: $ssid", Toast.LENGTH_LONG).show()
             restoreState()
+            connectToWifiAndStart(ssid, pass)
         }
+    }
+
+    private fun startQrCodeScan() {
+        scannerClient.startScan()
+            .addOnSuccessListener { barcode ->
+                val rawValue = barcode.rawValue
+                if (!rawValue.isNullOrEmpty()) {
+                    processScannedConfig(rawValue)
+                }
+            }
+            .addOnCanceledListener {
+                Toast.makeText(this, R.string.qr_scan_cancelled, Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, getString(R.string.qr_scan_failed, e.message), Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun processScannedConfig(contents: String) {
+        if (contents.startsWith("wirelesshelper://config", ignoreCase = true)) {
+            try {
+                handleConfigIntent(android.net.Uri.parse(contents))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Failed to parse helper config: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        } else if (contents.startsWith("WIFI:", ignoreCase = true)) {
+            val parsed = parseStandardWifiQr(contents)
+            if (parsed != null) {
+                val (ssid, pass) = parsed
+                saveWifiCredentials(ssid, pass)
+            } else {
+                Toast.makeText(this, "Invalid WiFi QR Code format", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(this, "Unrecognized QR Code content", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun parseStandardWifiQr(contents: String): Pair<String, String?>? {
+        val parts = contents.substring(5).split(";")
+        var ssid: String? = null
+        var pass: String? = null
+        for (part in parts) {
+            if (part.startsWith("S:", ignoreCase = true)) {
+                ssid = part.substring(2)
+            } else if (part.startsWith("P:", ignoreCase = true)) {
+                pass = part.substring(2)
+            }
+        }
+        return if (ssid != null) Pair(ssid, pass) else null
+    }
+
+    private fun saveWifiCredentials(ssid: String, pass: String?) {
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        prefs.edit {
+            putInt("connection_mode", 2) // Auto-switch to Tablet Hotspot / Passive Mode
+            val ssids = prefs.getStringSet("auto_start_wifi_ssids", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            ssids.add(ssid)
+            putStringSet("auto_start_wifi_ssids", ssids)
+        }
+
+        if (pass != null) {
+            com.andrerinas.wirelesshelper.utils.Prefs.getSecure(this).edit {
+                putString("wifi_pass_$ssid", pass)
+            }
+        }
+
+        Toast.makeText(this, "Configured WiFi: $ssid", Toast.LENGTH_LONG).show()
+        restoreState()
+        connectToWifiAndStart(ssid, pass)
+    }
+
+    private fun connectToWifiAndStart(ssid: String, pass: String?) {
+        val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+        if (!wm.isWifiEnabled) {
+            try {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    wm.isWifiEnabled = true
+                }
+            } catch (e: Exception) {
+                Log.w("HUREV_WIFI", "Could not enable WiFi programmatically: ${e.message}")
+            }
+        }
+
+        // 1. Suggest network for future auto-connection (API 29+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val suggestionBuilder = android.net.wifi.WifiNetworkSuggestion.Builder()
+                    .setSsid(ssid)
+                if (!pass.isNullOrEmpty()) {
+                    suggestionBuilder.setWpa2Passphrase(pass)
+                }
+                val suggestion = suggestionBuilder.build()
+                wm.addNetworkSuggestions(listOf(suggestion))
+                Log.i("HUREV_WIFI", "Added WiFi suggestion for $ssid")
+            } catch (e: Exception) {
+                Log.e("HUREV_WIFI", "Failed to add suggestions: ${e.message}")
+            }
+
+            // 2. Request network to prompt user to connect immediately
+            try {
+                val specifierBuilder = android.net.wifi.WifiNetworkSpecifier.Builder()
+                    .setSsid(ssid)
+                if (!pass.isNullOrEmpty()) {
+                    specifierBuilder.setWpa2Passphrase(pass)
+                }
+                val specifier = specifierBuilder.build()
+
+                val request = android.net.NetworkRequest.Builder()
+                    .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                    .removeCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .setNetworkSpecifier(specifier)
+                    .build()
+
+                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                cm.requestNetwork(request, object : android.net.ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: android.net.Network) {
+                        Log.i("HUREV_WIFI", "Immediate WiFi network available: $network")
+                    }
+                })
+            } catch (e: Exception) {
+                Log.e("HUREV_WIFI", "Failed to request network: ${e.message}")
+            }
+        } else {
+            // Legacy Wi-Fi connection for API < 29
+            try {
+                val wifiConfig = android.net.wifi.WifiConfiguration().apply {
+                    SSID = "\"$ssid\""
+                    if (!pass.isNullOrEmpty()) {
+                        preSharedKey = "\"$pass\""
+                    } else {
+                        allowedKeyManagement.set(android.net.wifi.WifiConfiguration.KeyMgmt.NONE)
+                    }
+                }
+                val netId = wm.addNetwork(wifiConfig)
+                if (netId != -1) {
+                    wm.disconnect()
+                    wm.enableNetwork(netId, true)
+                    wm.reconnect()
+                    Log.i("HUREV_WIFI", "Legacy WiFi connection initiated for: $ssid")
+                }
+            } catch (e: Exception) {
+                Log.e("HUREV_WIFI", "Failed legacy WiFi connection: ${e.message}")
+            }
+        }
+
+        // Start launcher service immediately
+        checkPermissionsAndStart()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

@@ -62,6 +62,48 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="16dp">
 
+                <!-- Scan QR Code Action Card -->
+                <LinearLayout
+                    android:id="@+id/layoutScanQrCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_item_single"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_qr_code"
+                        app:tint="@color/brand_teal"
+                        android:layout_marginEnd="16dp"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/scan_qr_code_title"
+                            android:textColor="@color/text_title"
+                            android:textSize="16sp"
+                            android:textStyle="bold"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/scan_qr_code_desc"
+                            android:textColor="@color/text_subtitle"
+                            android:textSize="12sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
                 <!-- 1. Connection Mode -->
                 <LinearLayout
                     android:id="@+id/layoutConnectionMode"

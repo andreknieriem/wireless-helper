@@ -127,4 +127,10 @@
     <string name="write_settings_title">Permission Needed</string>
     <string name="write_settings_msg">To automatically enable the Hotspot, Wireless Helper needs permission to \'Modify system settings\'. Please enable this in the next screen.</string>
     <string name="write_settings_button">Grant Permission</string>
+
+    <!-- QR Scanner -->
+    <string name="scan_qr_code_title">Scan Configuration QR Code</string>
+    <string name="scan_qr_code_desc">Scan a QR Code from Headunit Revived to configure connection settings</string>
+    <string name="qr_scan_cancelled">Scan cancelled</string>
+    <string name="qr_scan_failed">Scan failed: %s</string>
 </resources>
