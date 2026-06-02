@@ -6,9 +6,9 @@
     <string name="connection_mode_label">Režim připojení</string>
     <string name="mode_nsd">Sdílená Wi-Fi</string>
     <string name="mode_hotspot_phone">Hotspot telefonu</string>
-    <string name="mode_passive">Hotspot tabletu</string>
+    <string name="mode_passive">Hotspot autorádia</string>
     <string name="mode_wifi_direct">Wi-Fi Direct</string>
-    <string name="mode_nearby">Google Nearby (Beta)</string>
+    <string name="mode_nearby">Zařízení v okolí (Beta)</string>
     <string name="hotspot_force_stop_title">Vynutit zastavení hotspotu</string>
     <string name="hotspot_force_stop_desc">Vždy se pokusit vypnout hotspot při zastavení služby, i když nebyl spuštěn touto aplikací.</string>
     

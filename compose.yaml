@@ -1,0 +1,14 @@
+services:
+  build:
+    image: docker.io/cimg/android:2024.01
+    working_dir: /project
+    user: root
+    volumes:
+      - .:/project:Z
+      - gradle-cache:/root/.gradle
+      - debug-keystore:/root/.android
+    command: ./gradlew assembleDebug --no-daemon
+
+volumes:
+  gradle-cache:
+  debug-keystore:

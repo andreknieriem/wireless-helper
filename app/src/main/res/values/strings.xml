@@ -20,6 +20,14 @@
     <string name="static_ip_dialog_title">Configure Static IP</string>
     <string name="reset">Reset</string>
 
+    <!-- Hotspot Auto-Connect (Tablet Hotspot mode) -->
+    <string name="hotspot_credentials_label">Hotspot Auto-Connect</string>
+    <string name="hotspot_credentials_desc">Automatically connect to the headunit\'s WiFi hotspot</string>
+    <string name="hotspot_credentials_dialog_title">Hotspot Credentials</string>
+    <string name="hotspot_credentials_dialog_msg">Enter the headunit hotspot\'s SSID and password. On first connection, Android will show a confirmation dialog.</string>
+    <string name="hotspot_ssid_hint">SSID (e.g. AndroidAP)</string>
+    <string name="hotspot_password_hint">Password</string>
+
     <!-- Auto Start -->
     <string name="auto_start_label">Auto Start Service</string>
     <string name="auto_start_no">No (Manual)</string>

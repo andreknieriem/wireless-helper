@@ -209,6 +209,38 @@
                         android:textSize="14sp"/>
                 </LinearLayout>
 
+                <!-- 1c. Hotspot Auto-Connect (Hidden by default, shown if mode 2) -->
+                <LinearLayout
+                    android:id="@+id/layoutHotspotCredentials"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_item_middle"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hotspot_credentials_label"
+                        android:textColor="@color/text_title"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        android:layout_marginBottom="2dp"/>
+
+                    <TextView
+                        android:id="@+id/tvHotspotCredentialsValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/not_set"
+                        android:textColor="@color/text_subtitle"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+
                 <!-- 2. WiFi Direct Name (Hidden by default, shown if mode 3) -->
                 <LinearLayout
                     android:id="@+id/layoutWifiDirectName"
