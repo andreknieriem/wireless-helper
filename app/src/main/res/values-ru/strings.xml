@@ -20,7 +20,7 @@
     <string name="hotspot_credentials_desc">Автоматически подключаться к точке доступа Wi‑Fi головного устройства</string>
     <string name="hotspot_credentials_dialog_title">Данные точки доступа</string>
     <string name="hotspot_credentials_dialog_msg">Введите SSID и пароль точки доступа головного устройства. При первом подключении Android покажет диалог подтверждения.</string>
-    <string name="hotspot_ssid_hint">SSID (напр. AndroidAP)</string>
+    <string name="hotspot_ssid_hint">SSID (например, AndroidAP)</string>
     <string name="hotspot_password_hint">Пароль</string>
 
     <!-- Auto Start -->
