@@ -15,6 +15,14 @@
     <string name="hotspot_force_stop_title">Принудительная остановка точки доступа</string>
     <string name="hotspot_force_stop_desc">Всегда пытаться отключить точку доступа при остановке службы, даже если она не была запущена этим приложением.</string>
 
+    <!-- Hotspot Auto-Connect (Tablet Hotspot mode) -->
+    <string name="hotspot_credentials_label">Автоподключение к точке доступа</string>
+    <string name="hotspot_credentials_desc">Автоматически подключаться к точке доступа Wi‑Fi головного устройства</string>
+    <string name="hotspot_credentials_dialog_title">Данные точки доступа</string>
+    <string name="hotspot_credentials_dialog_msg">Введите SSID и пароль точки доступа головного устройства. При первом подключении Android покажет диалог подтверждения.</string>
+    <string name="hotspot_ssid_hint">SSID (например, AndroidAP)</string>
+    <string name="hotspot_password_hint">Пароль</string>
+
     <!-- Auto Start -->
     <string name="auto_start_label">Автозапуск сервиса</string>
     <string name="auto_start_no">Нет (вручную)</string>
@@ -48,7 +56,7 @@
     <!-- Wi-Fi Direct -->
     <string name="wifi_direct_name_label">Имя устройства Wi-Fi Direct</string>
     <string name="wifi_direct_name_hint">Введите имя (например, AndroidAuto-Unit)</string>
-    <string name="wifi_direct_name_dialog_title">Wi-Fi Direct Автоподключение</string>
+    <string name="wifi_direct_name_dialog_title">Автоподключение Wi-Fi Direct</string>
     <string name="wifi_direct_name_dialog_msg">Введите имя устройства Wi-Fi Direct для автоматического подключения при обнаружении.</string>
 
     <!-- Permissions & System -->
@@ -126,4 +134,10 @@
     <string name="static_ip_desc">Если установлено, приложение будет подключаться напрямую к этому IP вместо поиска.</string>
     <string name="static_ip_dialog_title">Настройка статического IP</string>
     <string name="reset">Сброс</string>
+
+    <!-- QR Scanner -->
+    <string name="scan_qr_code_title">Сканировать QR-код настройки</string>
+    <string name="scan_qr_code_desc">Сканируйте QR-код из Headunit Revived для настройки подключения</string>
+    <string name="qr_scan_cancelled">Сканирование отменено</string>
+    <string name="qr_scan_failed">Ошибка сканирования: %s</string>
 </resources>
