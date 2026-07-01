@@ -98,9 +98,10 @@ class AutoStartReceiver : BroadcastReceiver() {
     private fun startService(context: Context) {
         val serviceIntent = Intent(context, WirelessHelperService::class.java).apply {
             action = WirelessHelperService.ACTION_START
+            putExtra("EXTRA_FROM_BT", true)
         }
         try {
-            Log.i(TAG, "Firing Foreground Service Intent...")
+            Log.i(TAG, "Firing Foreground Service Intent with EXTRA_FROM_BT...")
             ContextCompat.startForegroundService(context, serviceIntent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to auto-start service: ${e.message}", e)

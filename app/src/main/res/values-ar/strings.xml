@@ -126,4 +126,9 @@
     <string name="static_ip_desc">إذا تم تعيينه، فسيقوم التطبيق بالاتصال مباشرة بهذا العنوان بدلاً من البحث.</string>
     <string name="static_ip_dialog_title">تكوين عنوان IP ثابت</string>
     <string name="reset">إعادة تعيين</string>
+
+    <string name="bt_start_delay_title">تأخير البدء التلقائي</string>
+    <string name="bt_start_delay_none">بدون تأخير</string>
+    <string name="bt_start_delay_seconds">%d ثوانٍ</string>
+    <string name="notif_starting_in">البدء خلال %d ثوانٍ…</string>
 </resources>

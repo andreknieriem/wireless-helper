@@ -27,6 +27,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 
 class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
@@ -35,6 +38,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     private var multicastLock: WifiManager.MulticastLock? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentStrategy: ConnectionStrategy? = null
+    private var strategyLaunchJob: Job? = null
+    private var reconnectJob: Job? = null
 
     companion object {
         private const val TAG = "HUREV_WIFI"
@@ -51,7 +56,16 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
         super.onCreate()
         setupLocks()
         createNotificationChannel()
-        startForeground(1, createNotification(getString(R.string.notif_searching)))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                1,
+                createNotification(getString(R.string.notif_searching)),
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            startForeground(1, createNotification(getString(R.string.notif_searching)))
+        }
     }
 
     private fun setupLocks() {
@@ -63,16 +77,20 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WirelessHelper:WakeLock")
+            wakeLock?.setReferenceCounted(false)
             
             Log.i(TAG, "Locks initialized")
         } catch (e: Exception) { Log.e(TAG, "Failed to initialize locks: ${e.message}") }
     }
 
-    private fun acquireWakeLock() {
+    private fun acquireWakeLock(timeout: Long = 10 * 60 * 1000L) {
         try {
-            if (wakeLock?.isHeld == false) {
-                wakeLock?.acquire(10 * 60 * 1000L) // 10 minutes max at a time
-                Log.d(TAG, "WakeLock acquired")
+            if (timeout > 0) {
+                wakeLock?.acquire(timeout)
+                Log.d(TAG, "WakeLock acquired with timeout: $timeout ms")
+            } else {
+                wakeLock?.acquire()
+                Log.d(TAG, "WakeLock acquired infinitely")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to acquire wake lock", e)
@@ -90,34 +108,58 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
         }
     }
 
-    private fun startSelectedStrategy() {
-        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
-        val mode = prefs.getInt("connection_mode", 0)
-        
-        acquireWakeLock()
-        currentStrategy?.stop()
+    private fun startSelectedStrategy(fromBt: Boolean = false) {
+        reconnectJob?.cancel()
+        reconnectJob = null
+        strategyLaunchJob?.cancel()
+        strategyLaunchJob = serviceScope.launch {
+            val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+            if (fromBt) {
+                val delaySeconds = prefs.getInt("bt_autostart_delay", 0)
+                if (delaySeconds > 0) {
+                    Log.i(TAG, "Delaying connection by $delaySeconds seconds (Bluetooth auto-start)...")
+                    for (i in delaySeconds downTo 1) {
+                        if (!isActive) break
+                        updateNotification(getString(R.string.notif_starting_in, i))
+                        delay(1000)
+                    }
+                    if (isActive) {
+                        updateNotification(getString(R.string.notif_searching))
+                    }
+                }
+            }
 
-        if (mode == 2) {
-            WifiNetworkBinding.start(this)
-        } else {
-            WifiNetworkBinding.stop(this)
-        }
+            if (!isActive) return@launch
 
-        currentStrategy = when (mode) {
-            0 -> StrategySharedNetwork(this, serviceScope)
-            1 -> StrategyHotspotPhone(this, serviceScope)
-            2 -> StrategyHotspotTablet(this, serviceScope)
-            3 -> StrategyWifiDirect(this, serviceScope)
-            4 -> StrategyNearby(this, serviceScope)
-            else -> StrategySharedNetwork(this, serviceScope)
+            withContext(Dispatchers.Main) {
+                val mode = prefs.getInt("connection_mode", 0)
+                
+                acquireWakeLock(10 * 60 * 1000L) // 10 minutes timeout while searching
+                currentStrategy?.stop()
+
+                if (mode == 2) {
+                    WifiNetworkBinding.start(this@WirelessHelperService)
+                } else {
+                    WifiNetworkBinding.stop(this@WirelessHelperService)
+                }
+
+                currentStrategy = when (mode) {
+                    0 -> StrategySharedNetwork(this@WirelessHelperService, serviceScope)
+                    1 -> StrategyHotspotPhone(this@WirelessHelperService, serviceScope)
+                    2 -> StrategyHotspotTablet(this@WirelessHelperService, serviceScope)
+                    3 -> StrategyWifiDirect(this@WirelessHelperService, serviceScope)
+                    4 -> StrategyNearby(this@WirelessHelperService, serviceScope)
+                    else -> StrategySharedNetwork(this@WirelessHelperService, serviceScope)
+                }
+                
+                if (currentStrategy is BaseStrategy) {
+                    (currentStrategy as BaseStrategy).stateListener = this@WirelessHelperService
+                }
+                
+                Log.i(TAG, "Starting strategy for mode $mode")
+                currentStrategy?.start()
+            }
         }
-        
-        if (currentStrategy is BaseStrategy) {
-            (currentStrategy as BaseStrategy).stateListener = this
-        }
-        
-        Log.i(TAG, "Starting strategy for mode $mode")
-        currentStrategy?.start()
     }
 
     override fun onConnecting() {
@@ -127,7 +169,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
     override fun onProxyConnected() {
         isConnected = true
-        acquireWakeLock()
+        acquireWakeLock(0) // Infinite/no timeout while projection is running
         updateNotification(getString(R.string.notif_connected))
         updateAllUIs()
     }
@@ -147,9 +189,9 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
         if (autoReconnect && anyTargetConnected) {
             Log.i(TAG, "Target Bluetooth still connected and auto-reconnect enabled. Restarting strategy...")
-            acquireWakeLock()
+            acquireWakeLock(10 * 60 * 1000L) // 10 minutes timeout during reconnect scan
             updateNotification(getString(R.string.notif_searching))
-            serviceScope.launch {
+            reconnectJob = serviceScope.launch {
                 delay(3000) // Buffer vor Neustart
                 startSelectedStrategy()
             }
@@ -215,7 +257,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             ACTION_START -> {
                 isRunning = true
                 isConnected = false
-                startSelectedStrategy()
+                val fromBt = intent.getBooleanExtra("EXTRA_FROM_BT", false)
+                startSelectedStrategy(fromBt)
                 updateAllUIs()
             }
         }
@@ -225,6 +268,10 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     override fun onDestroy() {
         isRunning = false
         isConnected = false
+        reconnectJob?.cancel()
+        reconnectJob = null
+        strategyLaunchJob?.cancel()
+        strategyLaunchJob = null
         WifiNetworkBinding.stop(this)
         currentStrategy?.stop()
         if (currentStrategy is BaseStrategy) {

@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Jeśli ustawione, aplikacja połączy się bezpośrednio z tym adresem IP zamiast wyszukiwania.</string>
     <string name="static_ip_dialog_title">Skonfiguruj statyczne IP</string>
     <string name="reset">Resetuj</string>
+
+    <string name="bt_start_delay_title">Opóźnienie automatycznego startu</string>
+    <string name="bt_start_delay_none">Bez opóźnienia</string>
+    <string name="bt_start_delay_seconds">%d sekund</string>
+    <string name="notif_starting_in">Uruchamianie za %d sekund…</string>
 </resources>

@@ -126,4 +126,9 @@
     <string name="static_ip_desc">Se impostato, l\'app si connetterà direttamente a questo IP invece di cercarlo.</string>
     <string name="static_ip_dialog_title">Configura IP statico</string>
     <string name="reset">Ripristina</string>
+
+    <string name="bt_start_delay_title">Ritardo avvio automatico</string>
+    <string name="bt_start_delay_none">Nessun ritardo</string>
+    <string name="bt_start_delay_seconds">%d secondi</string>
+    <string name="notif_starting_in">Avvio in %d secondi…</string>
 </resources>

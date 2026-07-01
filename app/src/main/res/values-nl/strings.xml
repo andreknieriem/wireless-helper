@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Indien ingesteld, maakt de app direct verbinding met dit IP in plaats van te zoeken.</string>
     <string name="static_ip_dialog_title">Statisch IP configureren</string>
     <string name="reset">Resetten</string>
+
+    <string name="bt_start_delay_title">Vertraging automatische start</string>
+    <string name="bt_start_delay_none">Geen vertraging</string>
+    <string name="bt_start_delay_seconds">%d seconden</string>
+    <string name="notif_starting_in">Starten in %d seconden…</string>
 </resources>

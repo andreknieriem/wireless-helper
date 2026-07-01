@@ -119,4 +119,9 @@
     <string name="static_ip_desc">如果已設定，應用程式將直接連接到此 IP，而不是搜尋。</string>
     <string name="static_ip_dialog_title">設定靜態 IP</string>
     <string name="reset">重設</string>
+
+    <string name="bt_start_delay_title">自動啟動延遲</string>
+    <string name="bt_start_delay_none">無延遲</string>
+    <string name="bt_start_delay_seconds">%d 秒</string>
+    <string name="notif_starting_in">%d 秒後啟動…</string>
 </resources>
