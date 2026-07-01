@@ -191,7 +191,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             Log.i(TAG, "Target Bluetooth still connected and auto-reconnect enabled. Restarting strategy...")
             acquireWakeLock(10 * 60 * 1000L) // 10 minutes timeout during reconnect scan
             updateNotification(getString(R.string.notif_searching))
-            serviceScope.launch {
+            reconnectJob = serviceScope.launch {
                 delay(3000) // Buffer vor Neustart
                 startSelectedStrategy()
             }
