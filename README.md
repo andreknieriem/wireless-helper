@@ -56,6 +56,7 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 - Fixed QR Crash
 - Enhanced Google Nearby Manager
 - Added Autostart via BT delay
+- Fixed disconnect on switching app
 
 ### v.1.8.0
 - Added: Auto-Connect to Tablet Hotmode mode. Thanks to @BackSlasher
