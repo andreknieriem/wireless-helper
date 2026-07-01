@@ -269,6 +269,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     override fun onDestroy() {
         isRunning = false
         isConnected = false
+        reconnectJob?.cancel()
+        reconnectJob = null
         strategyLaunchJob?.cancel()
         strategyLaunchJob = null
         WifiNetworkBinding.stop(this)
