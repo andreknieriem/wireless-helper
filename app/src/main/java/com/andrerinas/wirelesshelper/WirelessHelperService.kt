@@ -39,6 +39,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentStrategy: ConnectionStrategy? = null
     private var strategyLaunchJob: Job? = null
+    private var reconnectJob: Job? = null
 
     companion object {
         private const val TAG = "HUREV_WIFI"
