@@ -126,4 +126,9 @@
     <string name="static_ip_desc">Wenn gesetzt, verbindet sich die App direkt mit dieser IP, anstatt zu suchen.</string>
     <string name="static_ip_dialog_title">Statische IP konfigurieren</string>
     <string name="reset">Zurücksetzen</string>
+
+    <string name="bt_start_delay_title">Startverzögerung</string>
+    <string name="bt_start_delay_none">Keine Verzögerung</string>
+    <string name="bt_start_delay_seconds">%d Sekunden</string>
+    <string name="notif_starting_in">Start in %d Sekunden…</string>
 </resources>

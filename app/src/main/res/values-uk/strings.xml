@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Якщо встановлено, програма підключатиметься безпосередньо до цієї IP-адреси замість пошуку.</string>
     <string name="static_ip_dialog_title">Налаштування статичного IP</string>
     <string name="reset">Скинути</string>
+
+    <string name="bt_start_delay_title">Затримка автозапуску</string>
+    <string name="bt_start_delay_none">Без затримки</string>
+    <string name="bt_start_delay_seconds">%d секунд</string>
+    <string name="notif_starting_in">Запуск через %d секунд…</string>
 </resources>

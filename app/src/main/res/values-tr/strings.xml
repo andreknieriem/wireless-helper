@@ -113,5 +113,10 @@
     <string name="write_settings_title">İzin Gerekli</string>
     <string name="write_settings_msg">Erişim noktasını otomatik etkinleştirmek için Wireless Helper\'ın \'Sistem ayarlarını değiştirme\' iznine ihtiyacı vardır. Lütfen sonraki ekranda bunu etkinleştirin.</string>
     <string name="write_settings_button">İzin Ver</string>
+
+    <string name="bt_start_delay_title">Otomatik Başlatma Gecikmesi</string>
+    <string name="bt_start_delay_none">Gecikme yok</string>
+    <string name="bt_start_delay_seconds">%d saniye</string>
+    <string name="notif_starting_in">%d saniye içinde başlatılıyor…</string>
 </resources>
 

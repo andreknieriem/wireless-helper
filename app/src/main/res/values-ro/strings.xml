@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Dacă este setată, aplicația se va conecta direct la acest IP în loc să caute.</string>
     <string name="static_ip_dialog_title">Configurare IP static</string>
     <string name="reset">Resetare</string>
+
+    <string name="bt_start_delay_title">Întârziere pornire automată</string>
+    <string name="bt_start_delay_none">Fără întârziere</string>
+    <string name="bt_start_delay_seconds">%d secunde</string>
+    <string name="notif_starting_in">Pornește în %d secunde…</string>
 </resources>

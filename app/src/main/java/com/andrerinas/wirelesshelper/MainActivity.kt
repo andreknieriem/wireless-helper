@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchBtAutoReconnect: androidx.appcompat.widget.SwitchCompat
     private lateinit var layoutBtDisconnectStop: View
     private lateinit var switchBtDisconnectStop: androidx.appcompat.widget.SwitchCompat
+    private lateinit var layoutBtStartDelay: View
+    private lateinit var tvBtStartDelayValue: TextView
     private lateinit var layoutWifiNetwork: View
     private lateinit var tvWifiNetworkValue: TextView
     private lateinit var layoutWifiDirectName: View
@@ -196,6 +198,8 @@ class MainActivity : AppCompatActivity() {
         switchBtAutoReconnect = findViewById(R.id.switchBtAutoReconnect)
         layoutBtDisconnectStop = findViewById(R.id.layoutBtDisconnectStop)
         switchBtDisconnectStop = findViewById(R.id.switchBtDisconnectStop)
+        layoutBtStartDelay = findViewById(R.id.layoutBtStartDelay)
+        tvBtStartDelayValue = findViewById(R.id.tvBtStartDelayValue)
         layoutWifiNetwork = findViewById(R.id.layoutWifiNetwork)
         tvWifiNetworkValue = findViewById(R.id.tvWifiNetworkValue)
         layoutWifiDirectName = findViewById(R.id.layoutWifiDirectName)
@@ -296,6 +300,7 @@ class MainActivity : AppCompatActivity() {
         setupSwitchSetting(layoutHotspotForceStop, switchHotspotForceStop, "force_stop_hotspot")
         setupSwitchSetting(layoutBtAutoReconnect, switchBtAutoReconnect, "bt_auto_reconnect")
         setupSwitchSetting(layoutBtDisconnectStop, switchBtDisconnectStop, "bt_disconnect_stop")
+        layoutBtStartDelay.setOnClickListener { showBtStartDelayDialog() }
         layoutWifiNetwork.setOnClickListener { showWifiSelector() }
         layoutWifiDirectName.setOnClickListener { showWifiDirectNameSelector() }
         btnScanQrCodeHeader.setOnClickListener { startQrCodeScan() }
@@ -546,6 +551,7 @@ class MainActivity : AppCompatActivity() {
         updateBluetoothValueDisplay()
         updateWifiValueDisplay()
         updateWifiDirectValueDisplay()
+        updateBtStartDelayDisplay()
         switchBtAutoReconnect.isChecked = prefs.getBoolean("bt_auto_reconnect", false)
         switchHotspotForceStop.isChecked = prefs.getBoolean("force_stop_hotspot", false)
         switchBtDisconnectStop.isChecked = prefs.getBoolean("bt_disconnect_stop", false)
@@ -616,6 +622,7 @@ class MainActivity : AppCompatActivity() {
         layoutBluetoothDevice.visibility = btVis
         layoutBtAutoReconnect.visibility = btVis
         layoutBtDisconnectStop.visibility = btVis
+        layoutBtStartDelay.visibility = btVis
         layoutWifiNetwork.visibility = if (mode == 2) View.VISIBLE else View.GONE
     }
 
@@ -703,6 +710,45 @@ class MainActivity : AppCompatActivity() {
     private fun applyLanguage(tag: String) {
         val localeList = if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)
         AppCompatDelegate.setApplicationLocales(localeList)
+    }
+
+    private fun showBtStartDelayDialog() {
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        val currentDelay = prefs.getInt("bt_autostart_delay", 0)
+        val options = arrayOf(
+            getString(R.string.bt_start_delay_none),
+            getString(R.string.bt_start_delay_seconds, 2),
+            getString(R.string.bt_start_delay_seconds, 5),
+            getString(R.string.bt_start_delay_seconds, 10),
+            getString(R.string.bt_start_delay_seconds, 15),
+            getString(R.string.bt_start_delay_seconds, 20),
+            getString(R.string.bt_start_delay_seconds, 30)
+        )
+        val values = intArrayOf(0, 2, 5, 10, 15, 20, 30)
+        
+        var selectedIndex = values.indexOf(currentDelay)
+        if (selectedIndex == -1) selectedIndex = 0
+        
+        MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
+            .setTitle(R.string.bt_start_delay_title)
+            .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                val chosenDelay = values[which]
+                prefs.edit { putInt("bt_autostart_delay", chosenDelay) }
+                updateBtStartDelayDisplay()
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun updateBtStartDelayDisplay() {
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        val delaySeconds = prefs.getInt("bt_autostart_delay", 0)
+        tvBtStartDelayValue.text = if (delaySeconds == 0) {
+            getString(R.string.bt_start_delay_none)
+        } else {
+            getString(R.string.bt_start_delay_seconds, delaySeconds)
+        }
     }
 
     private fun showWifiSelector() {

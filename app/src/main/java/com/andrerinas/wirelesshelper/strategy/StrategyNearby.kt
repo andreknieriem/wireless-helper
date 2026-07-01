@@ -21,6 +21,8 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
     private val SERVICE_ID = "com.andrerinas.hurev"
     private var activeNearbySocket: NearbySocket? = null
     private var activePipes: Array<android.os.ParcelFileDescriptor>? = null
+    private var activeEndpointId: String? = null
+    private var upgradeTimeoutJob: kotlinx.coroutines.Job? = null
 
     override fun start() {
         Log.i(TAG, "NearbyStrategy: Starting Nearby Connections (Advertiser only)...")
@@ -29,8 +31,11 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
 
     override fun stop() {
         Log.i(TAG, "NearbyStrategy: Stopping Nearby Connections...")
+        upgradeTimeoutJob?.cancel()
+        upgradeTimeoutJob = null
         connectionsClient.stopAdvertising()
         connectionsClient.stopAllEndpoints()
+        activeEndpointId = null
         cleanup()
     }
 
@@ -69,8 +74,33 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             when (result.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
-                    Log.i(TAG, "NearbyStrategy: Connected to $endpointId. Stopping advertising and initiating tunnel...")
+                    Log.i(TAG, "NearbyStrategy: Connected to $endpointId. Stopping advertising and waiting up to 10s for Wi-Fi upgrade...")
                     connectionsClient.stopAdvertising()
+                    activeEndpointId = endpointId
+
+                    // Start a 10-second timeout for the Wi-Fi bandwidth upgrade
+                    upgradeTimeoutJob?.cancel()
+                    upgradeTimeoutJob = scope.launch {
+                        kotlinx.coroutines.delay(10_000)
+                        if (activeNearbySocket == null && activeEndpointId == endpointId) {
+                            Log.w(TAG, "NearbyStrategy: Wi-Fi Bandwidth upgrade timed out. Disconnecting endpoint to avoid Bluetooth fallback.")
+                            stop()
+                        }
+                    }
+                }
+                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> Log.w(TAG, "NearbyStrategy: Connection rejected by $endpointId")
+                ConnectionsStatusCodes.STATUS_ERROR -> Log.e(TAG, "NearbyStrategy: Connection error with $endpointId")
+            }
+        }
+
+        override fun onBandwidthChanged(endpointId: String, bandwidthInfo: BandwidthInfo) {
+            Log.i(TAG, "NearbyStrategy: Bandwidth changed for $endpointId: Quality=${bandwidthInfo.quality}")
+            if (bandwidthInfo.quality == BandwidthInfo.Quality.HIGH) {
+                if (activeEndpointId == endpointId && activeNearbySocket == null) {
+                    Log.i(TAG, "NearbyStrategy: High bandwidth connection established (Quality: HIGH)! Initiating stream tunnel...")
+                    
+                    upgradeTimeoutJob?.cancel()
+                    upgradeTimeoutJob = null
 
                     scope.launch {
                         // Small delay to ensure both sides are ready for the stream registration
@@ -94,13 +124,17 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
                         launchAndroidAuto("127.0.0.1", preConnectedSocket = socket)
                     }
                 }
-                ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> Log.w(TAG, "NearbyStrategy: Connection rejected by $endpointId")
-                ConnectionsStatusCodes.STATUS_ERROR -> Log.e(TAG, "NearbyStrategy: Connection error with $endpointId")
             }
         }
 
         override fun onDisconnected(endpointId: String) {
             Log.i(TAG, "NearbyStrategy: Disconnected from $endpointId")
+            if (activeEndpointId == endpointId) {
+                activeEndpointId = null
+                activeNearbySocket = null
+                upgradeTimeoutJob?.cancel()
+                upgradeTimeoutJob = null
+            }
         }
     }
 

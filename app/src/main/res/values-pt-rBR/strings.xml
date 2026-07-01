@@ -126,4 +126,9 @@
     <string name="static_ip_desc">Se definido, o aplicativo se conectará diretamente a este IP em vez de procurar.</string>
     <string name="static_ip_dialog_title">Configurar IP Estático</string>
     <string name="reset">Redefinir</string>
+
+    <string name="bt_start_delay_title">Atraso de início automático</string>
+    <string name="bt_start_delay_none">Sem atraso</string>
+    <string name="bt_start_delay_seconds">%d segundos</string>
+    <string name="notif_starting_in">Iniciando em %d segundos…</string>
 </resources>

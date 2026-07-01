@@ -140,4 +140,9 @@
     <string name="scan_qr_code_desc">Сканируйте QR-код из Headunit Revived для настройки подключения</string>
     <string name="qr_scan_cancelled">Сканирование отменено</string>
     <string name="qr_scan_failed">Ошибка сканирования: %s</string>
+
+    <string name="bt_start_delay_title">Задержка автозапуска</string>
+    <string name="bt_start_delay_none">Без задержки</string>
+    <string name="bt_start_delay_seconds">%d секунд</string>
+    <string name="notif_starting_in">Запуск через %d секунд…</string>
 </resources>

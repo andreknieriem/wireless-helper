@@ -141,4 +141,9 @@
     <string name="scan_qr_code_desc">Scan a QR Code from Headunit Revived to configure connection settings</string>
     <string name="qr_scan_cancelled">Scan cancelled</string>
     <string name="qr_scan_failed">Scan failed: %s</string>
+
+    <string name="bt_start_delay_title">Auto-Start Delay</string>
+    <string name="bt_start_delay_none">No delay</string>
+    <string name="bt_start_delay_seconds">%d seconds</string>
+    <string name="notif_starting_in">Starting in %d seconds…</string>
 </resources>

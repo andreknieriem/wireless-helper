@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Pokud je nastaveno, aplikace se připojí přímo k této IP adrese namísto vyhledávání.</string>
     <string name="static_ip_dialog_title">Konfigurace statické IP</string>
     <string name="reset">Resetovat</string>
+
+    <string name="bt_start_delay_title">Zpoždění automatického startu</string>
+    <string name="bt_start_delay_none">Bez zpoždění</string>
+    <string name="bt_start_delay_seconds">%d sekund</string>
+    <string name="notif_starting_in">Spouštění za %d sekund…</string>
 </resources>

@@ -119,4 +119,9 @@
     <string name="static_ip_desc">Ha be van állítva, az alkalmazás közvetlenül ehhez az IP-hez csatlakozik a keresés helyett.</string>
     <string name="static_ip_dialog_title">Statikus IP konfigurálása</string>
     <string name="reset">Visszaállítás</string>
+
+    <string name="bt_start_delay_title">Automatikus indítás késleltetése</string>
+    <string name="bt_start_delay_none">Nincs késleltetés</string>
+    <string name="bt_start_delay_seconds">%d másodperc</string>
+    <string name="notif_starting_in">Indítás %d másodperc múlva…</string>
 </resources>

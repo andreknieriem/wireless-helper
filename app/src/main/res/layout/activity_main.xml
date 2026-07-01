@@ -412,6 +412,38 @@
                         android:focusable="false"/>
                 </LinearLayout>
 
+                <!-- 4c. Bluetooth Auto-Start Delay -->
+                <LinearLayout
+                    android:id="@+id/layoutBtStartDelay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_item_middle"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/bt_start_delay_title"
+                        android:textColor="@color/text_title"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
+                        android:layout_marginBottom="2dp"/>
+
+                    <TextView
+                        android:id="@+id/tvBtStartDelayValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/bt_start_delay_none"
+                        android:textColor="@color/text_subtitle"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+
                 <!-- 5. WiFi Network -->
                 <LinearLayout
                     android:id="@+id/layoutWifiNetwork"

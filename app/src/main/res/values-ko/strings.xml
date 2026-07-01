@@ -126,4 +126,9 @@
     <string name="write_settings_title">권한 필요</string>
     <string name="write_settings_msg">핫스팟을 자동으로 활성화하려면, Wireless Helper는 \'시스템 설정 수정\' 권한이 필요합니다. 다음 화면에서 활성화하세요.</string>
     <string name="write_settings_button">권한 부여</string>
+
+    <string name="bt_start_delay_title">자동 시작 지연</string>
+    <string name="bt_start_delay_none">지연 없음</string>
+    <string name="bt_start_delay_seconds">%d초</string>
+    <string name="notif_starting_in">%d초 후 시작…</string>
 </resources>
