@@ -39,6 +39,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentStrategy: ConnectionStrategy? = null
     private var strategyLaunchJob: Job? = null
+    private var reconnectJob: Job? = null
 
     companion object {
         private const val TAG = "HUREV_WIFI"
@@ -191,7 +192,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             Log.i(TAG, "Target Bluetooth still connected and auto-reconnect enabled. Restarting strategy...")
             acquireWakeLock(10 * 60 * 1000L) // 10 minutes timeout during reconnect scan
             updateNotification(getString(R.string.notif_searching))
-            serviceScope.launch {
+            reconnectJob = serviceScope.launch {
                 delay(3000) // Buffer vor Neustart
                 startSelectedStrategy()
             }
@@ -268,6 +269,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     override fun onDestroy() {
         isRunning = false
         isConnected = false
+        reconnectJob?.cancel()
+        reconnectJob = null
         strategyLaunchJob?.cancel()
         strategyLaunchJob = null
         WifiNetworkBinding.stop(this)
