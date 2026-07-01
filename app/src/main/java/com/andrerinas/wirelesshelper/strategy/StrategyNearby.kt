@@ -82,9 +82,11 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
                     upgradeTimeoutJob?.cancel()
                     upgradeTimeoutJob = scope.launch {
                         kotlinx.coroutines.delay(10_000)
-                        if (activeNearbySocket == null && activeEndpointId == endpointId) {
-                            Log.w(TAG, "NearbyStrategy: Wi-Fi Bandwidth upgrade timed out. Disconnecting endpoint to avoid Bluetooth fallback.")
-                            stop()
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            if (activeNearbySocket == null && activeEndpointId == endpointId) {
+                                Log.w(TAG, "NearbyStrategy: Wi-Fi Bandwidth upgrade timed out. Disconnecting endpoint to avoid Bluetooth fallback.")
+                                stop()
+                            }
                         }
                     }
                 }
