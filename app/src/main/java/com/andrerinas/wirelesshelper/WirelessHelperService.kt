@@ -77,6 +77,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WirelessHelper:WakeLock")
+            wakeLock?.setReferenceCounted(false)
             
             Log.i(TAG, "Locks initialized")
         } catch (e: Exception) { Log.e(TAG, "Failed to initialize locks: ${e.message}") }
@@ -84,10 +85,6 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
     private fun acquireWakeLock(timeout: Long = 10 * 60 * 1000L) {
         try {
-            if (wakeLock?.isHeld == true) {
-                wakeLock?.release()
-                Log.d(TAG, "WakeLock released prior to re-acquisition")
-            }
             if (timeout > 0) {
                 wakeLock?.acquire(timeout)
                 Log.d(TAG, "WakeLock acquired with timeout: $timeout ms")
@@ -112,6 +109,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
     }
 
     private fun startSelectedStrategy(fromBt: Boolean = false) {
+        reconnectJob?.cancel()
+        reconnectJob = null
         strategyLaunchJob?.cancel()
         strategyLaunchJob = serviceScope.launch {
             val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)

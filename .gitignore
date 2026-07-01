@@ -12,3 +12,4 @@ todo.txt
 *.jks
 test_files
 .vscode
+.kotlin
