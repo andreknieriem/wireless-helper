@@ -52,6 +52,7 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.8.1
 - Fixed QR Crash
 - Enhanced Google Nearby Manager
 - Added Autostart via BT delay
