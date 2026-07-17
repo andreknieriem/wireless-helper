@@ -116,17 +116,22 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         context.registerReceiver(p2pReceiver, intentFilter)
         
         // Remove WiFi direct group and start the continuous discovery loop
-        p2pManager?.removeGroup(p2pChannel, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                Log.i(TAG, "Old P2P group removed")
-                startDiscoveryLoop()
-            }
+        val channel = p2pChannel
+        if (channel != null) {
+            p2pManager?.removeGroup(channel, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.i(TAG, "Old P2P group removed")
+                    startDiscoveryLoop()
+                }
 
-            override fun onFailure(reason: Int) {
-                Log.i(TAG, "removeGroup failed ($reason)")
-                startDiscoveryLoop()
-            }
-        })
+                override fun onFailure(reason: Int) {
+                    Log.i(TAG, "removeGroup failed ($reason)")
+                    startDiscoveryLoop()
+                }
+            })
+        } else {
+            startDiscoveryLoop()
+        }
     }
 
     private fun startDiscoveryLoop() {
@@ -135,7 +140,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                 if (!isConnectingToPeer && !isLaunching.get()) {
                     discoverPeers()
                 }
-                delay(30000) // Restart discovery every 30 seconds
+                delay(5000) // Restart discovery every 5 seconds
             }
         }
     }
