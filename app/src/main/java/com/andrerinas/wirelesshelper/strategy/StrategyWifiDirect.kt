@@ -115,8 +115,18 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
 
         context.registerReceiver(p2pReceiver, intentFilter)
         
-        // Start the continuous discovery loop
-        startDiscoveryLoop()
+        // Remove WiFi direct group and start the continuous discovery loop
+        p2pManager?.removeGroup(p2pChannel, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {
+                Log.i(TAG, "Old P2P group removed")
+                startDiscoveryLoop()
+            }
+
+            override fun onFailure(reason: Int) {
+                Log.i(TAG, "removeGroup failed ($reason)")
+                startDiscoveryLoop()
+            }
+        })
     }
 
     private fun startDiscoveryLoop() {
