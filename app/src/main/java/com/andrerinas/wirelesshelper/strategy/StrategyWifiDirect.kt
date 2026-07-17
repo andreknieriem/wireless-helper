@@ -60,11 +60,11 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                                 Log.d(TAG, "P2P Peers found: ${peers.deviceList.size}")
                                 for (device in peers.deviceList) {
                                     val statusText = when(device.status) {
-                                        0 -> "AVAILABLE"
-                                        1 -> "INVITED"
-                                        2 -> "CONNECTED"
-                                        3 -> "FAILED"
-                                        4 -> "UNAVAILABLE"
+                                        WifiP2pDevice.CONNECTED -> "CONNECTED"
+                                        WifiP2pDevice.INVITED -> "INVITED"
+                                        WifiP2pDevice.FAILED -> "FAILED"
+                                        WifiP2pDevice.AVAILABLE -> "AVAILABLE"
+                                        WifiP2pDevice.UNAVAILABLE -> "UNAVAILABLE"
                                         else -> "UNKNOWN (${device.status})"
                                     }
                                     Log.d(TAG, "  - Found: ${device.deviceName} Status: $statusText")
