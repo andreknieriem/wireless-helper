@@ -131,7 +131,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                     Log.i(TAG, "Scanning....")
                     discoverPeers()
                 }
-                delay(5000) // Restart discovery every 5 seconds
+                delay(10000) // Restart discovery every 10 seconds
             }
         }
     }
