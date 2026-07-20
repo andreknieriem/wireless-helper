@@ -25,9 +25,8 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("HURev")) ?: setOf("HURev")
 
         Log.i(TAG, "Strategy: WiFi Direct (Targets: $targetDeviceNames)")
-
+        
         setupP2p()
-        //startNsdDiscovery()
     }
 
     private fun setupP2p() {
@@ -133,7 +132,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                     Log.i(TAG, "Scanning....")
                     discoverPeers()
                 }
-                delay(5000) // Restart discovery every 10 seconds
+                delay(5000) // Restart discovery every 5 seconds
             }
         }
     }
@@ -187,7 +186,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
 
         try { context.unregisterReceiver(p2pReceiver) } catch (e: Exception) {}
         p2pReceiver = null
-
+        
         if (channel != null) {
             @SuppressLint("MissingPermission")
             p2pManager?.stopPeerDiscovery(channel, null)
