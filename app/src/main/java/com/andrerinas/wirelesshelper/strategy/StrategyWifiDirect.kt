@@ -31,16 +31,16 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("HURev")) ?: setOf("HURev")
 
         Log.i(TAG, "Strategy: WiFi Direct (Targets: $targetDeviceNames)")
-        
+
         setupP2p()
-        startNsdDiscovery()
+        //startNsdDiscovery()
     }
 
     private fun setupP2p() {
         if (p2pManager == null) return
         val channel = p2pManager.initialize(context, context.mainLooper, null)
         p2pChannel = channel
-        
+
         val intentFilter = IntentFilter().apply {
             addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
             addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
@@ -54,17 +54,17 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                     WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
                         p2pManager.requestPeers(p2pChannel) { peers ->
                             if (targetDeviceNames.isEmpty()) return@requestPeers
-                            
+
                             // Log found peers for debugging
                             if (peers.deviceList.isNotEmpty()) {
                                 Log.d(TAG, "P2P Peers found: ${peers.deviceList.size}")
                                 for (device in peers.deviceList) {
                                     val statusText = when(device.status) {
-                                        WifiP2pDevice.CONNECTED -> "CONNECTED"
-                                        WifiP2pDevice.INVITED -> "INVITED"
-                                        WifiP2pDevice.FAILED -> "FAILED"
-                                        WifiP2pDevice.AVAILABLE -> "AVAILABLE"
-                                        WifiP2pDevice.UNAVAILABLE -> "UNAVAILABLE"
+                                        0 -> "AVAILABLE"
+                                        1 -> "INVITED"
+                                        2 -> "CONNECTED"
+                                        3 -> "FAILED"
+                                        4 -> "UNAVAILABLE"
                                         else -> "UNKNOWN (${device.status})"
                                     }
                                     Log.d(TAG, "  - Found: ${device.deviceName} Status: $statusText")
@@ -114,9 +114,22 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         }
 
         context.registerReceiver(p2pReceiver, intentFilter)
-        
-        // Start the continuous discovery loop
-        startDiscoveryLoop()
+
+        // Remove WiFi direct group and start the continuous discovery loop
+        val p2pChannel = p2pChannel
+        if (p2pChannel != null) {
+            p2pManager?.removeGroup(p2pChannel, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.i(TAG, "Old P2P group removed")
+                    startDiscoveryLoop()
+                }
+
+                override fun onFailure(reason: Int) {
+                    Log.i(TAG, "removeGroup failed ($reason)")
+                    startDiscoveryLoop()
+                }
+            })
+        }
     }
 
     private fun startDiscoveryLoop() {
@@ -124,8 +137,9 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
             while (isActive) {
                 if (!isConnectingToPeer && !isLaunching.get()) {
                     discoverPeers()
+                    Log.i(TAG, "Scanning....")
                 }
-                delay(30000) // Restart discovery every 30 seconds
+                delay(10000) // Restart discovery every 10 seconds
             }
         }
     }
@@ -133,7 +147,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
     @SuppressLint("MissingPermission")
     private fun discoverPeers() {
         val channel = p2pChannel ?: return
-        
+
         // Always stop previous discovery to refresh the list
         p2pManager?.stopPeerDiscovery(channel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -161,12 +175,12 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
             deviceAddress = device.deviceAddress
             wps.setup = android.net.wifi.WpsInfo.PBC
         }
-        
+
         isConnectingToPeer = true
         Log.i(TAG, "Attempting to connect to P2P device (PBC): ${device.deviceName}")
         p2pManager?.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() { Log.d(TAG, "P2P Connect initiated") }
-            override fun onFailure(reason: Int) { 
+            override fun onFailure(reason: Int) {
                 Log.e(TAG, "P2P Connect failed: $reason")
                 isConnectingToPeer = false
             }
@@ -180,8 +194,8 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                 nsdManager.resolveService(service, object : NsdManager.ResolveListener {
                     override fun onResolveFailed(si: NsdServiceInfo, err: Int) {}
                     override fun onServiceResolved(si: NsdServiceInfo) {
-                        si.host.hostAddress?.let { 
-                            launchAndroidAuto(it) 
+                        si.host.hostAddress?.let {
+                            launchAndroidAuto(it)
                         }
                     }
                 })
@@ -204,10 +218,10 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         super.stop()
         try { nsdManager.stopServiceDiscovery(discoveryListener) } catch (e: Exception) {}
         discoveryListener = null
-        
+
         try { context.unregisterReceiver(p2pReceiver) } catch (e: Exception) {}
         p2pReceiver = null
-        
+
         if (channel != null) {
             @SuppressLint("MissingPermission")
             p2pManager?.stopPeerDiscovery(channel, null)
