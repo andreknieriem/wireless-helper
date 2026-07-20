@@ -109,15 +109,14 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         context.registerReceiver(p2pReceiver, intentFilter)
 
         p2pManager.requestConnectionInfo(channel) { info ->
-            if (info.groupFormed) {
-                val host = info.groupOwnerAddress?.hostAddress
+            val host = info?.groupOwnerAddress?.hostAddress
+            if (info != null && info.groupFormed && host != null) {
 
-                if (host != null) {
-                    Log.i(TAG, "Existing WiFi Direct group found. Owner: $host")
+                Log.i(TAG, "Existing WiFi Direct group found. Owner: $host")
 
-                    isConnectingToPeer = false
-                    launchAndroidAuto(host)
-                }
+                isConnectingToPeer = false
+                launchAndroidAuto(host)
+
             } else {
                 Log.i(TAG, "No existing WiFi Direct group start discovering")
                 startDiscoveryLoop()
