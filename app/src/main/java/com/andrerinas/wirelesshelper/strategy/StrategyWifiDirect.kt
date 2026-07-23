@@ -179,16 +179,43 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         })
     }
 
+    override fun stopForLaunch() {
+        Log.d(TAG, "P2P stopForLaunch: pausing discovery loop while keeping active P2P connection")
+        super.stop()
+        val channel = p2pChannel
+        if (channel != null && p2pManager != null) {
+            @SuppressLint("MissingPermission")
+            p2pManager.stopPeerDiscovery(channel, null)
+        }
+    }
+
     override fun stop() {
         val channel = p2pChannel
+        val manager = p2pManager
         super.stop()
 
-        try { context.unregisterReceiver(p2pReceiver) } catch (e: Exception) {}
+        try { 
+            p2pReceiver?.let { context.unregisterReceiver(it) } 
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to unregister P2P receiver: ${e.message}")
+        }
         p2pReceiver = null
         
-        if (channel != null) {
+        if (channel != null && manager != null) {
+            Log.i(TAG, "Stopping WiFi Direct Strategy and removing P2P group")
             @SuppressLint("MissingPermission")
-            p2pManager?.stopPeerDiscovery(channel, null)
+            manager.stopPeerDiscovery(channel, null)
+            @SuppressLint("MissingPermission")
+            manager.cancelConnect(channel, null)
+            @SuppressLint("MissingPermission")
+            manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.i(TAG, "WiFi Direct removeGroup SUCCESS")
+                }
+                override fun onFailure(reason: Int) {
+                    Log.w(TAG, "WiFi Direct removeGroup failed: $reason")
+                }
+            })
         }
         p2pChannel = null
         isConnectingToPeer = false

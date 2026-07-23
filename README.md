@@ -52,6 +52,12 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.9.0
+- **WiFi-Direct Teardown Fix:** Added proper `removeGroup` and `cancelConnect` calls on stop to prevent ghost P2P states and chip `BUSY` errors.
+- **WiFi-Direct Launch Optimization:** Paused peer discovery loop during launch while preserving active P2P connection (PR #58).
+- **Wi-Fi Auto-Start Fixes:** Added `WIFI_STATE_CHANGED` receiver and updated BT connection checks so pending auto-start triggers as soon as Wi-Fi turns on (e.g., via Samsung Routines).
+- **Bluetooth Delay Fix:** Preserved `EXTRA_FROM_BT` flag on pending Wi-Fi start to ensure configured Bluetooth auto-start delay countdown runs.
+
 ### v.1.8.1
 - Fixed QR Crash
 - Enhanced Google Nearby Manager

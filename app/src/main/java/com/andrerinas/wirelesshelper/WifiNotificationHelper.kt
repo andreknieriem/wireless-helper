@@ -164,44 +164,53 @@ object WifiNotificationHelper {
         val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         if (!wifiManager.isWifiEnabled) return
 
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
-        val adapter = bluetoothManager.adapter ?: return
-        
         val targetMacs = prefs.getStringSet("auto_start_bt_macs", emptySet()) ?: emptySet()
-        if (targetMacs.isEmpty()) {
+        val legacyTargetMac = prefs.getString("auto_start_bt_mac", null)
+
+        if (targetMacs.isEmpty() && legacyTargetMac.isNullOrEmpty()) {
             prefs.edit().remove("pending_wifi_start").apply()
             return
         }
 
-        // Check if any of the target devices are currently connected
-        // We check A2DP and HEADSET profiles as they are typical for cars
-        adapter.getProfileProxy(context, object : android.bluetooth.BluetoothProfile.ServiceListener {
-            override fun onServiceConnected(profile: Int, proxy: android.bluetooth.BluetoothProfile) {
-                val connectedDevices = try {
-                    proxy.connectedDevices
-                } catch (e: SecurityException) {
-                    emptyList()
-                }
-                val isStillConnected = connectedDevices.any { targetMacs.contains(it.address) }
-                
-                if (isStillConnected) {
-                    android.util.Log.i("HUREV_WIFI", "Pending WiFi start: Target BT device is still connected. Starting service.")
-                    prefs.edit().remove("pending_wifi_start").apply()
-                    cancelNotification(context)
-                    
-                    val serviceIntent = Intent(context, WirelessHelperService::class.java).apply {
-                        action = WirelessHelperService.ACTION_START
-                    }
-                    if (Build.VERSION.SDK_INT >= 26) {
-                        context.startForegroundService(serviceIntent)
-                    } else {
-                        context.startService(serviceIntent)
-                    }
-                }
-                adapter.closeProfileProxy(profile, proxy)
+        val isStillConnected = targetMacs.any { mac -> isBluetoothDeviceConnected(context, mac) } ||
+                (!legacyTargetMac.isNullOrEmpty() && isBluetoothDeviceConnected(context, legacyTargetMac))
+
+        if (isStillConnected) {
+            android.util.Log.i("HUREV_WIFI", "Pending WiFi start: Target BT device is still connected. Starting service.")
+            prefs.edit().remove("pending_wifi_start").apply()
+            cancelNotification(context)
+
+            val serviceIntent = Intent(context, WirelessHelperService::class.java).apply {
+                action = WirelessHelperService.ACTION_START
+                putExtra("EXTRA_FROM_BT", true)
             }
-            override fun onServiceDisconnected(profile: Int) {}
-        }, android.bluetooth.BluetoothProfile.A2DP)
+            if (Build.VERSION.SDK_INT >= 26) {
+                androidx.core.content.ContextCompat.startForegroundService(context, serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        }
+    }
+
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun isBluetoothDeviceConnected(context: Context, mac: String): Boolean {
+        try {
+            val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
+            val adapter = bm.adapter ?: return false
+            val device = adapter.getRemoteDevice(mac) ?: return false
+
+            return try {
+                val isConnectedMethod = device.javaClass.getMethod("isConnected")
+                isConnectedMethod.invoke(device) as? Boolean ?: false
+            } catch (e: Exception) {
+                val a2dp = adapter.getProfileConnectionState(android.bluetooth.BluetoothProfile.A2DP)
+                val hfp = adapter.getProfileConnectionState(android.bluetooth.BluetoothProfile.HEADSET)
+                a2dp == android.bluetooth.BluetoothProfile.STATE_CONNECTED || 
+                hfp == android.bluetooth.BluetoothProfile.STATE_CONNECTED
+            }
+        } catch (e: Exception) {
+            return false
+        }
     }
 
     /**
