@@ -8,6 +8,8 @@ import android.content.IntentFilter
 import android.net.NetworkInfo
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import kotlinx.coroutines.*
 
@@ -25,7 +27,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("HURev")) ?: setOf("HURev")
 
         Log.i(TAG, "Strategy: WiFi Direct (Targets: $targetDeviceNames)")
-        
+
         setupP2p()
     }
 
@@ -112,13 +114,16 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
             val host = info?.groupOwnerAddress?.hostAddress
             if (info != null && info.groupFormed && host != null) {
 
-                Log.i(TAG, "Existing WiFi Direct group found. Owner: $host")
+                p2pManager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() { Log.d(TAG,"Start group removal success") }
+                    override fun onFailure(reason: Int) { Log.d(TAG,"Start group removal failed: $reason") }
+                })
 
-                isConnectingToPeer = false
-                launchAndroidAuto(host)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    startDiscoveryLoop()
+                }, 200)
 
             } else {
-                Log.i(TAG, "No existing WiFi Direct group start discovering")
                 startDiscoveryLoop()
             }
         }
@@ -128,7 +133,6 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         getStrategyScope().launch {
             while (isActive) {
                 if (!isConnectingToPeer && !isLaunching.get()) {
-                    Log.i(TAG, "Scanning....")
                     discoverPeers()
                 }
                 delay(10000) // Restart discovery every 10 seconds
@@ -194,28 +198,17 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         val manager = p2pManager
         super.stop()
 
-        try { 
-            p2pReceiver?.let { context.unregisterReceiver(it) } 
+        try {
+            p2pReceiver?.let { context.unregisterReceiver(it) }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to unregister P2P receiver: ${e.message}")
         }
         p2pReceiver = null
-        
+
         if (channel != null && manager != null) {
             Log.i(TAG, "Stopping WiFi Direct Strategy and removing P2P group")
             @SuppressLint("MissingPermission")
             manager.stopPeerDiscovery(channel, null)
-            @SuppressLint("MissingPermission")
-            manager.cancelConnect(channel, null)
-            @SuppressLint("MissingPermission")
-            manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    Log.i(TAG, "WiFi Direct removeGroup SUCCESS")
-                }
-                override fun onFailure(reason: Int) {
-                    Log.w(TAG, "WiFi Direct removeGroup failed: $reason")
-                }
-            })
         }
         p2pChannel = null
         isConnectingToPeer = false
