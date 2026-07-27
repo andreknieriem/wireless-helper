@@ -52,6 +52,10 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.9.1
+- Wifi direct improve, thanks to @notathf
+- Fix stacked Overlay/Write-Settings/Battery-Optimization dialogs on first launch, thanks to @o-jcardenass 
+
 ### v.1.9.0
 - **WiFi-Direct Teardown Fix:** Added proper `removeGroup` and `cancelConnect` calls on stop to prevent ghost P2P states and chip `BUSY` errors.
 - **WiFi-Direct Launch Optimization:** Paused peer discovery loop during launch while preserving active P2P connection (PR #58).
