@@ -51,6 +51,8 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { _: Boolean -> }
 
+    private var activeSetupDialog: android.app.Dialog? = null
+
     private lateinit var btnToggleService: Button
     private lateinit var layoutConnectionMode: View
     private lateinit var tvConnectionModeValue: TextView
@@ -977,14 +979,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         handler.post(statusPoller)
-        checkBatteryOptimization()
-        checkOverlayPermission()
-        
+        runSetupChecks()
+
         val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
         val currentMode = prefs.getInt("connection_mode", 0)
-        if (currentMode == 1 || currentMode == 2) { // Phone or Tablet Hotspot
-            checkWriteSettingsPermission()
-        }
 
         // Handle 'On App Start' auto-start (mode index 3)
         val autoStartMode = prefs.getInt("auto_start_mode", 0)
@@ -996,10 +994,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Runs the battery/overlay/write-settings checks one at a time, in order, never showing
+    // more than one of these dialogs at once. Each onResume() re-enters this chain and picks
+    // up wherever permission state currently stands.
+    private fun runSetupChecks() {
+        if (!checkBatteryOptimization()) return
+        if (!checkOverlayPermission()) return
+        val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+        val currentMode = prefs.getInt("connection_mode", 0)
+        if (currentMode == 1 || currentMode == 2) { // Phone or Tablet Hotspot
+            checkWriteSettingsPermission()
+        }
+    }
+
     private fun checkWriteSettingsPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!android.provider.Settings.System.canWrite(this)) {
-                MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
+                if (activeSetupDialog?.isShowing == true) return false
+                activeSetupDialog = MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
                     .setTitle(R.string.write_settings_title)
                     .setMessage(R.string.write_settings_msg)
                     .setCancelable(false)
@@ -1009,6 +1021,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         startActivity(intent)
                     }
+                    .setOnDismissListener { activeSetupDialog = null }
                     .show()
                 return false
             }
@@ -1016,23 +1029,29 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    private fun checkOverlayPermission() {
+    private fun checkOverlayPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(this)) {
-            MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog).setTitle(R.string.overlay_perm_title).setMessage(R.string.overlay_perm_msg).setCancelable(false).setPositiveButton(R.string.overlay_perm_button) { _, _ ->
+            if (activeSetupDialog?.isShowing == true) return false
+            activeSetupDialog = MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog).setTitle(R.string.overlay_perm_title).setMessage(R.string.overlay_perm_msg).setCancelable(false).setPositiveButton(R.string.overlay_perm_button) { _, _ ->
                 startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply { data = android.net.Uri.parse("package:$packageName") })
-            }.show()
+            }.setOnDismissListener { activeSetupDialog = null }.show()
+            return false
         }
+        return true
     }
 
-    private fun checkBatteryOptimization() {
+    private fun checkBatteryOptimization(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
             if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog).setTitle(R.string.battery_opt_title).setMessage(R.string.battery_opt_msg).setPositiveButton(R.string.wifi_background_location_button) { _, _ ->
+                if (activeSetupDialog?.isShowing == true) return false
+                activeSetupDialog = MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog).setTitle(R.string.battery_opt_title).setMessage(R.string.battery_opt_msg).setPositiveButton(R.string.wifi_background_location_button) { _, _ ->
                     startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply { data = android.net.Uri.parse("package:$packageName") })
-                }.setNegativeButton(android.R.string.cancel, null).show()
+                }.setNegativeButton(android.R.string.cancel, null).setOnDismissListener { activeSetupDialog = null }.show()
+                return false
             }
         }
+        return true
     }
 
     override fun onPause() {
