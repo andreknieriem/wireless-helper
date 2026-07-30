@@ -36,9 +36,8 @@ class TransparentTriggerActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.w(TAG, "Activity launch failed (${e.message}). Attempting Broadcast fallback...")
                 try {
-                    // Read params from the failed intent to build the broadcast
+                    // Fallback 1: WirelessStartupReceiver
                     val port = targetIntent.getIntExtra("PARAM_SERVICE_PORT", 5288)
-                    
                     val receiverIntent = Intent().apply {
                         setClassName("com.google.android.projection.gearhead", "com.google.android.apps.auto.wireless.setup.receiver.WirelessStartupReceiver")
                         action = "com.google.android.apps.auto.wireless.setup.receiver.wirelessstartup.START"
@@ -47,9 +46,34 @@ class TransparentTriggerActivity : AppCompatActivity() {
                         addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     }
                     sendBroadcast(receiverIntent)
-                    Log.i(TAG, "Broadcast fallback sent successfully.")
+                    Log.i(TAG, "Broadcast fallback 1 (WirelessStartupReceiver) sent.")
+
+                    // Fallback 2: WifiBluetoothReceiver (START_WIRELESS_PROJECTION) for AA 17.4+
+                    val bondedAddress = try {
+                        val adapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+                        val bonded = adapter?.bondedDevices
+                        val connectedDevice = bonded?.firstOrNull { dev ->
+                            try {
+                                val m = dev.javaClass.getMethod("isConnected")
+                                (m.invoke(dev) as? Boolean) == true
+                            } catch (e: Exception) { false }
+                        }
+                        val targetDev = connectedDevice ?: bonded?.firstOrNull()
+                        Log.i(TAG, "BT Discovery: bondedCount=${bonded?.size ?: 0}, connectedMac=${connectedDevice?.address}, selectedMac=${targetDev?.address}")
+                        targetDev?.address
+                    } catch (e: Exception) {
+                        null
+                    } ?: "00:11:22:33:44:55"
+
+                    val btReceiverIntent = Intent("com.google.android.projection.gearhead.START_WIRELESS_PROJECTION").apply {
+                        setClassName("com.google.android.projection.gearhead", "com.google.android.apps.auto.wireless.bluetooth.WifiBluetoothReceiver")
+                        putExtra("DEVICE_ADDRESS", bondedAddress)
+                        addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    }
+                    sendBroadcast(btReceiverIntent)
+                    Log.i(TAG, "Broadcast fallback 2 (WifiBluetoothReceiver START_WIRELESS_PROJECTION with MAC $bondedAddress) sent.")
                 } catch (e2: Exception) {
-                    Log.e(TAG, "Both Activity and Broadcast triggers failed. Activity Error: ${e.message}, Broadcast Error: ${e2.message}")
+                    Log.e(TAG, "All triggers failed. Activity Error: ${e.message}, Broadcast Error: ${e2.message}")
                 }
             }
         } else {
