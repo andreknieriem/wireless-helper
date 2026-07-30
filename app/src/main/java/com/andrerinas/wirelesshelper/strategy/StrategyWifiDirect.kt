@@ -22,6 +22,59 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
     private var targetDeviceNames: Set<String> = emptySet()
     private var isConnectingToPeer = false
 
+    private val timeoutHandler = Handler(Looper.getMainLooper())
+    private var connectTimeoutRunnable: Runnable? = null
+    private val CONNECT_TIMEOUT_MS = 20_000L // long enough for a human to tap the dialog
+    private val GROUP_REUSE_VERIFY_TIMEOUT_MS = 7_000L // shorter than launchAndroidAuto's own 15s timeout
+
+    private fun scheduleConnectTimeout() {
+        clearConnectTimeout()
+        val runnable = Runnable {
+            connectTimeoutRunnable = null
+            Log.w(TAG, "P2P connect attempt timed out; cancelling and resetting for retry")
+            val channel = p2pChannel
+            if (channel != null && p2pManager != null) {
+                @SuppressLint("MissingPermission")
+                p2pManager.cancelConnect(channel, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() { Log.d(TAG, "cancelConnect succeeded after timeout") }
+                    override fun onFailure(reason: Int) { Log.d(TAG, "cancelConnect failed after timeout: $reason") }
+                })
+            }
+            isConnectingToPeer = false
+        }
+        connectTimeoutRunnable = runnable
+        timeoutHandler.postDelayed(runnable, CONNECT_TIMEOUT_MS)
+    }
+
+    private fun clearConnectTimeout() {
+        connectTimeoutRunnable?.let { timeoutHandler.removeCallbacks(it) }
+        connectTimeoutRunnable = null
+    }
+
+    // deletePersistentGroup isn't public SDK, called via reflection like headunit-revived's
+    // WifiDirectManager.kt does. No reflectable way to list real netIds, so sweep a small fixed
+    // range — onFailure for a netId that doesn't exist is expected/harmless.
+    @SuppressLint("MissingPermission")
+    private fun forgetAllPersistentGroups(channel: WifiP2pManager.Channel) {
+        val mgr = p2pManager ?: return
+        try {
+            val method = mgr.javaClass.getMethod(
+                "deletePersistentGroup",
+                WifiP2pManager.Channel::class.java,
+                Int::class.javaPrimitiveType,
+                WifiP2pManager.ActionListener::class.java
+            )
+            for (netId in 0..9) {
+                method.invoke(mgr, channel, netId, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() { Log.d(TAG, "Forgot persistent group netId=$netId") }
+                    override fun onFailure(reason: Int) { /* expected when netId doesn't exist */ }
+                })
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "deletePersistentGroup reflection unavailable: ${e.message}")
+        }
+    }
+
     override fun start() {
         val prefs = context.getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
         targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("HURev")) ?: setOf("HURev")
@@ -35,6 +88,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         if (p2pManager == null) return
         val channel = p2pManager.initialize(context, context.mainLooper, null)
         p2pChannel = channel
+        forgetAllPersistentGroups(channel)
 
         val intentFilter = IntentFilter().apply {
             addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
@@ -71,6 +125,12 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                                 targetDeviceNames.any { target -> device.deviceName.contains(target, ignoreCase = true) }
                             }
 
+                            if (match != null && match.status == WifiP2pDevice.FAILED && isConnectingToPeer) {
+                                Log.w(TAG, "P2P peer ${match.deviceName} reported FAILED status; resetting for retry")
+                                clearConnectTimeout()
+                                isConnectingToPeer = false
+                            }
+
                             if (match != null && !isConnectingToPeer) {
                                 if (match.status == WifiP2pDevice.AVAILABLE) {
                                     connectToPeer(match)
@@ -87,13 +147,18 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
                                 if (info.groupFormed) {
                                     val host = info.groupOwnerAddress.hostAddress
                                     Log.i(TAG, "WiFi Direct connected. Group Owner: $host")
+                                    clearConnectTimeout()
                                     isConnectingToPeer = false
                                     // FORCE FAKE NETWORK 0 for correct P2P routing
                                     launchAndroidAuto(host)
                                 }
                             }
                         } else {
-                            isConnectingToPeer = false
+                            // Not a reliable success/failure signal on its own — can fire on
+                            // transient intermediate states while an invitation is still
+                            // outstanding. Don't clear isConnectingToPeer here; the connect
+                            // timeout watchdog and FAILED peer-status check own that instead.
+                            Log.d(TAG, "P2P connection changed: not connected")
                         }
                     }
                     WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
@@ -113,15 +178,24 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         p2pManager.requestConnectionInfo(channel) { info ->
             val host = info?.groupOwnerAddress?.hostAddress
             if (info != null && info.groupFormed && host != null) {
+                // Reuse the existing group instead of always tearing it down (PR #60 made
+                // teardown unconditional as a workaround, not the real fix). Fall back to a
+                // clean teardown + fresh discovery if this group turns out to be stale.
+                Log.i(TAG, "Existing WiFi Direct group found. Owner: $host — reusing without renegotiating")
+                isConnectingToPeer = false
+                launchAndroidAuto(host)
 
-                p2pManager.removeGroup(channel, object : WifiP2pManager.ActionListener {
-                    override fun onSuccess() { Log.d(TAG,"Start group removal success") }
-                    override fun onFailure(reason: Int) { Log.d(TAG,"Start group removal failed: $reason") }
-                })
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    startDiscoveryLoop()
-                }, 200)
+                getStrategyScope().launch {
+                    delay(GROUP_REUSE_VERIFY_TIMEOUT_MS)
+                    if (!connectionEstablished.get()) {
+                        Log.w(TAG, "Reused group produced no connection within ${GROUP_REUSE_VERIFY_TIMEOUT_MS}ms — falling back to clean teardown and fresh discovery")
+                        p2pManager.removeGroup(channel, object : WifiP2pManager.ActionListener {
+                            override fun onSuccess() { Log.d(TAG, "Fallback group removal success") }
+                            override fun onFailure(reason: Int) { Log.d(TAG, "Fallback group removal failed: $reason") }
+                        })
+                        startDiscoveryLoop()
+                    }
+                }
 
             } else {
                 startDiscoveryLoop()
@@ -173,11 +247,13 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         }
 
         isConnectingToPeer = true
+        scheduleConnectTimeout()
         Log.i(TAG, "Attempting to connect to P2P device (PBC): ${device.deviceName}")
         p2pManager?.connect(channel, config, object : WifiP2pManager.ActionListener {
             override fun onSuccess() { Log.d(TAG, "P2P Connect initiated") }
             override fun onFailure(reason: Int) {
                 Log.e(TAG, "P2P Connect failed: $reason")
+                clearConnectTimeout()
                 isConnectingToPeer = false
             }
         })
@@ -197,6 +273,8 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
         val channel = p2pChannel
         val manager = p2pManager
         super.stop()
+
+        clearConnectTimeout()
 
         try {
             p2pReceiver?.let { context.unregisterReceiver(it) }
