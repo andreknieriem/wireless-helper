@@ -14,8 +14,8 @@ android {
         applicationId = "com.andrerinas.wirelesshelper"
         minSdk = 21
         targetSdk = 36
-        versionCode = 26
-        versionName = "1.9.1"
+        versionCode = 27
+        versionName = "1.9.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
