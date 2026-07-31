@@ -77,9 +77,19 @@ class AapProxy(
                 val tabletIn = tabletSocket.getInputStream()
                 val tabletOut = tabletSocket.getOutputStream()
 
-                // Two-way pump
-                val job1 = launch { pump(aaIn, tabletOut, "AA -> Tablet") }
-                val job2 = launch { pump(tabletIn, aaOut, "Tablet -> AA") }
+                // Each direction force-closes BOTH sockets as soon as it ends (source hung up
+                // or errored) — this is what unblocks whichever pump is still stuck in a
+                // blocking read() on its own end, so joinAll() below can't deadlock waiting on
+                // a peer (e.g. Google's AA app) that never proactively closes its socket on
+                // its own after the tablet side hangs up.
+                val job1 = launch {
+                    pump(aaIn, tabletOut, "AA -> Tablet")
+                    closeBridgeSockets(aaSocket, tabletSocket)
+                }
+                val job2 = launch {
+                    pump(tabletIn, aaOut, "Tablet -> AA")
+                    closeBridgeSockets(aaSocket, tabletSocket)
+                }
 
                 joinAll(job1, job2)
             } catch (e: Exception) {
@@ -87,14 +97,21 @@ class AapProxy(
             } finally {
                 Log.i(TAG, "Bridge closed")
                 activeTabletSocket = null
-                try { aaSocket.close() } catch (e: Exception) {}
-                try { tabletSocket?.close() } catch (e: Exception) {}
-                
+                closeBridgeSockets(aaSocket, tabletSocket)
+
                 if (activeBridges.decrementAndGet() <= 0) {
                     listener?.onDisconnected()
                 }
             }
         }
+    }
+
+    /** Force-closes both ends of the bridge. Safe to call repeatedly/concurrently -
+     *  Socket.close() is internally guarded (`if (isClosed()) return`), so repeat calls are
+     *  harmless no-ops. */
+    private fun closeBridgeSockets(aaSocket: Socket, tabletSocket: Socket?) {
+        try { aaSocket.close() } catch (e: Exception) {}
+        try { tabletSocket?.close() } catch (e: Exception) {}
     }
 
     private suspend fun pump(input: InputStream, output: OutputStream, name: String) = withContext(Dispatchers.IO) {
