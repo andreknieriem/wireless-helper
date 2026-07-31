@@ -18,7 +18,7 @@ class StrategyNearby(context: Context, scope: CoroutineScope) : BaseStrategy(con
 
     override val TAG = "HUREV_NEARBY"
     private val connectionsClient = Nearby.getConnectionsClient(context)
-    private val SERVICE_ID = "com.andrerinas.hurev"
+    private val SERVICE_ID = "com.andrerinas.openhu"
     private var activeNearbySocket: NearbySocket? = null
     private var activePipes: Array<android.os.ParcelFileDescriptor>? = null
     private var activeEndpointId: String? = null
