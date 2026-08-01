@@ -105,8 +105,8 @@
 
     <!-- About Dialog -->
     <string name="about">О приложении и поддержка</string>
-    <string name="about_description">Легковесный триггер для Headunit Revived</string>
-    <string name="about_dialog_body">Wireless Helper — приложение-триггер для Headunit Revived.\n\nРазработчик: André Rinas\n© 2026</string>
+    <string name="about_description">Легковесный триггер для Open Headunit</string>
+    <string name="about_dialog_body">Wireless Helper — приложение-триггер для Open Headunit.\n\nРазработчик: André Rinas\n© 2026</string>
 
     <!-- Info Section -->
     <string name="category_info">ИНФО</string>
@@ -122,7 +122,7 @@
     <!-- Alerts -->
     <string name="channel_name_alerts">Оповещения о подключении</string>
     <string name="notification_wifi_off_title">Wi-Fi отключен!</string>
-    <string name="notification_wifi_off_text">Для подключения Headunit Revived требуется Wi-Fi.</string>
+    <string name="notification_wifi_off_text">Для подключения Open Headunit требуется Wi-Fi.</string>
     <string name="action_turn_on_wifi">ВКЛЮЧИТЬ WI-FI</string>
     <string name="auto_start_on_app_start">При запуске приложения</string>
 
@@ -137,7 +137,7 @@
 
     <!-- QR Scanner -->
     <string name="scan_qr_code_title">Сканировать QR-код настройки</string>
-    <string name="scan_qr_code_desc">Сканируйте QR-код из Headunit Revived для настройки подключения</string>
+    <string name="scan_qr_code_desc">Сканируйте QR-код из Open Headunit для настройки подключения</string>
     <string name="qr_scan_cancelled">Сканирование отменено</string>
     <string name="qr_scan_failed">Ошибка сканирования: %s</string>
 

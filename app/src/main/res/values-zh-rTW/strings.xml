@@ -58,7 +58,7 @@
     <string name="settings_header">設定</string>
     <string name="version">版本</string>
     <string name="about">關於與支援</string>
-    <string name="about_description">Headunit Revived 的輕量化觸發器</string>
+    <string name="about_description">Open Headunit 的輕量化觸發器</string>
 
     <!-- Language -->
     <string name="language_label">語言</string>
@@ -92,7 +92,7 @@
     <string name="connected">已連接</string>
 
     <!-- About Dialog -->
-    <string name="about_dialog_body">Wireless Helper 是 Headunit Revived 的觸發應用程式。\n\n由 André Rinas 開發\n© 2026</string>
+    <string name="about_dialog_body">Wireless Helper 是 Open Headunit 的觸發應用程式。\n\n由 André Rinas 開發\n© 2026</string>
 
     <!-- Bluetooth -->
     <string name="bt_disabled">藍牙已停用。請開啟藍牙以選擇裝置。</string>
@@ -107,7 +107,7 @@
 
     <string name="channel_name_alerts">連接提醒</string>
     <string name="notification_wifi_off_title">Wi-Fi 已停用！</string>
-    <string name="notification_wifi_off_text">Headunit Revived 需要 Wi-Fi 才能連接。</string>
+    <string name="notification_wifi_off_text">Open Headunit 需要 Wi-Fi 才能連接。</string>
     <string name="action_turn_on_wifi">開啟 WI-FI</string>
     <string name="auto_start_on_app_start">應用程式啟動時</string>
 

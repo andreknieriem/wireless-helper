@@ -93,8 +93,8 @@
     <string name="state_off">Kapalı</string>
 
     <string name="about">Hakkında &amp; Destek</string>
-    <string name="about_description">Headunit Revived için hafif tetikleyici uygulama</string>
-    <string name="about_dialog_body">Wireless Helper, Headunit Revived için yardımcı bir uygulamadır.\n\nAndré Rinas tarafından geliştirilmiştir\n© 2026</string>
+    <string name="about_description">Open Headunit için hafif tetikleyici uygulama</string>
+    <string name="about_dialog_body">Wireless Helper, Open Headunit için yardımcı bir uygulamadır.\n\nAndré Rinas tarafından geliştirilmiştir\n© 2026</string>
 
     <string name="category_info">BİLGİ</string>
     <string name="settings_header">AYARLAR</string>

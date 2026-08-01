@@ -98,8 +98,8 @@
 
     <!-- About Dialog -->
     <string name="about">Informazioni e Supporto</string>
-    <string name="about_description">Trigger leggero per Headunit Revived</string>
-    <string name="about_dialog_body">Wireless Helper è un\'app trigger per Headunit Revived.\n\nSviluppata da André Rinas\n© 2026</string>
+    <string name="about_description">Trigger leggero per Open Headunit</string>
+    <string name="about_dialog_body">Wireless Helper è un\'app trigger per Open Headunit.\n\nSviluppata da André Rinas\n© 2026</string>
 
     <!-- Info Section -->
     <string name="category_info">INFO</string>
@@ -115,7 +115,7 @@
     <!-- Alerts -->
     <string name="channel_name_alerts">Avvisi di connessione</string>
     <string name="notification_wifi_off_title">Wi-Fi disabilitato!</string>
-    <string name="notification_wifi_off_text">Headunit Revived necessita del Wi-Fi per connettersi.</string>
+    <string name="notification_wifi_off_text">Open Headunit necessita del Wi-Fi per connettersi.</string>
     <string name="action_turn_on_wifi">ATTIVA WI-FI</string>
 
     <string name="write_settings_title">Permesso necessario</string>

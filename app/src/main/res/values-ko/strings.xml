@@ -103,8 +103,8 @@
 
     <!-- About Dialog -->
     <string name="about">About &amp; Support</string>
-    <string name="about_description">Lightweight trigger for Headunit Revived</string>
-    <string name="about_dialog_body">Wireless Helper is a trigger app for Headunit Revived.\n\nDeveloped by André Rinas\n© 2026</string>
+    <string name="about_description">Lightweight trigger for Open Headunit</string>
+    <string name="about_dialog_body">Wireless Helper is a trigger app for Open Headunit.\n\nDeveloped by André Rinas\n© 2026</string>
 
     <!-- Info Section -->
     <string name="category_info">정보</string>
@@ -120,7 +120,7 @@
     <!-- Alerts -->
     <string name="channel_name_alerts">연결 알림</string>
     <string name="notification_wifi_off_title">Wi-Fi 비활성화!</string>
-    <string name="notification_wifi_off_text">Headunit Revived는 Wi-Fi 연결이 필요합니다.</string>
+    <string name="notification_wifi_off_text">Open Headunit는 Wi-Fi 연결이 필요합니다.</string>
     <string name="action_turn_on_wifi">Wi-Fi 활성화</string>
 
     <string name="write_settings_title">권한 필요</string>

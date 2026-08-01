@@ -112,8 +112,8 @@
 
     <!-- About Dialog -->
     <string name="about">About &amp; Support</string>
-    <string name="about_description">Lightweight trigger for Headunit Revived</string>
-    <string name="about_dialog_body">Wireless Helper is a trigger app for Headunit Revived.\n\nDeveloped by André Rinas\n© 2026</string>
+    <string name="about_description">Lightweight trigger for Open Headunit</string>
+    <string name="about_dialog_body">Wireless Helper is a trigger app for Open Headunit.\n\nDeveloped by André Rinas\n© 2026</string>
 
     <!-- Info Section -->
     <string name="category_info">INFO</string>
@@ -129,7 +129,7 @@
     <!-- Alerts -->
     <string name="channel_name_alerts">Connection Alerts</string>
     <string name="notification_wifi_off_title">Wi-Fi is Disabled!</string>
-    <string name="notification_wifi_off_text">Headunit Revived needs Wi-Fi to connect.</string>
+    <string name="notification_wifi_off_text">Open Headunit needs Wi-Fi to connect.</string>
     <string name="action_turn_on_wifi">TURN ON WI-FI</string>
 
     <string name="write_settings_title">Permission Needed</string>
@@ -138,7 +138,7 @@
 
     <!-- QR Scanner -->
     <string name="scan_qr_code_title">Scan Configuration QR Code</string>
-    <string name="scan_qr_code_desc">Scan a QR Code from Headunit Revived to configure connection settings</string>
+    <string name="scan_qr_code_desc">Scan a QR Code from Open Headunit to configure connection settings</string>
     <string name="qr_scan_cancelled">Scan cancelled</string>
     <string name="qr_scan_failed">Scan failed: %s</string>
 

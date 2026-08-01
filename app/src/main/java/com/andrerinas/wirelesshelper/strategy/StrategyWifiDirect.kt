@@ -77,7 +77,7 @@ class StrategyWifiDirect(context: Context, scope: CoroutineScope) : BaseStrategy
 
     override fun start() {
         val prefs = context.getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
-        targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("HURev")) ?: setOf("HURev")
+        targetDeviceNames = prefs.getStringSet("wifi_direct_target_names", setOf("OpenHU", "HURev")) ?: setOf("OpenHU", "HURev")
 
         Log.i(TAG, "Strategy: WiFi Direct (Targets: $targetDeviceNames)")
 

@@ -58,7 +58,7 @@
     <string name="settings_header">INSTELLINGEN</string>
     <string name="version">Versie</string>
     <string name="about">Over &amp; Ondersteuning</string>
-    <string name="about_description">Lichtgewicht trigger voor Headunit Revived</string>
+    <string name="about_description">Lichtgewicht trigger voor Open Headunit</string>
 
     <!-- Language -->
     <string name="language_label">Taal</string>
@@ -92,7 +92,7 @@
     <string name="connected">Verbonden</string>
 
     <!-- About Dialog -->
-    <string name="about_dialog_body">Wireless Helper is een trigger-app voor Headunit Revived.\n\nOntwikkeld door André Rinas\n© 2026</string>
+    <string name="about_dialog_body">Wireless Helper is een trigger-app voor Open Headunit.\n\nOntwikkeld door André Rinas\n© 2026</string>
 
     <!-- Bluetooth -->
     <string name="bt_disabled">Bluetooth is uitgeschakeld. Zet het aan om apparaten te selecteren.</string>
@@ -107,7 +107,7 @@
 
     <string name="channel_name_alerts">Verbindingsmeldingen</string>
     <string name="notification_wifi_off_title">Wi-Fi is uitgeschakeld!</string>
-    <string name="notification_wifi_off_text">Headunit Revived heeft Wi-Fi nodig om verbinding te maken.</string>
+    <string name="notification_wifi_off_text">Open Headunit heeft Wi-Fi nodig om verbinding te maken.</string>
     <string name="action_turn_on_wifi">ZET WI-FI AAN</string>
     <string name="auto_start_on_app_start">Bij opstarten app</string>
 

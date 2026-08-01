@@ -55,6 +55,9 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.9.3
+- Sync Nearby Connections SERVICE_ID with HUR's rename to Open Headunit
+
 ### v.1.9.2 - Maybe the last version :(
 - Fix isConnectingToPeer race, restore group reuse, and forget stale persistent groups, thanks to @o-jcardenass
 - Added BT address for Android Auto 17.4, which might help some devices to connect again

@@ -97,8 +97,8 @@
 
     <!-- About Dialog -->
     <string name="about">حول &amp; الدعم</string>
-    <string name="about_description">أداة تشغيل خفيفة لـ Headunit Revived</string>
-    <string name="about_dialog_body">Wireless Helper هو تطبيق تشغيل لـ Headunit Revived.\n\nتطوير André Rinas\n© 2026</string>
+    <string name="about_description">أداة تشغيل خفيفة لـ Open Headunit</string>
+    <string name="about_dialog_body">Wireless Helper هو تطبيق تشغيل لـ Open Headunit.\n\nتطوير André Rinas\n© 2026</string>
 
     <!-- Info Section -->
     <string name="category_info">معلومات</string>
@@ -114,7 +114,7 @@
     <!-- Alerts -->
     <string name="channel_name_alerts">تنبيهات الاتصال</string>
     <string name="notification_wifi_off_title">واي فاي معطل!</string>
-    <string name="notification_wifi_off_text">يحتاج Headunit Revived إلى واي فاي للاتصال.</string>
+    <string name="notification_wifi_off_text">يحتاج Open Headunit إلى واي فاي للاتصال.</string>
     <string name="action_turn_on_wifi">تشغيل الواي فاي</string>
     <string name="auto_start_on_app_start">عند تشغيل التطبيق</string>
 

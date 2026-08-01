@@ -58,7 +58,7 @@
     <string name="settings_header">SETĂRI</string>
     <string name="version">Versiune</string>
     <string name="about">Despre și Suport</string>
-    <string name="about_description">Lightweight trigger pentru Headunit Revived</string>
+    <string name="about_description">Lightweight trigger pentru Open Headunit</string>
 
     <!-- Language -->
     <string name="language_label">Limbă</string>
@@ -92,7 +92,7 @@
     <string name="connected">Conectat</string>
 
     <!-- About Dialog -->
-    <string name="about_dialog_body">Wireless Helper este o aplicație de activare pentru Headunit Revived.\n\nDezvoltată de André Rinas\n© 2026</string>
+    <string name="about_dialog_body">Wireless Helper este o aplicație de activare pentru Open Headunit.\n\nDezvoltată de André Rinas\n© 2026</string>
 
     <!-- Bluetooth -->
     <string name="bt_disabled">Bluetooth este dezactivat. Vă rugăm să îl activați pentru a selecta dispozitivele.</string>
@@ -107,7 +107,7 @@
 
     <string name="channel_name_alerts">Alerte conexiune</string>
     <string name="notification_wifi_off_title">Wi-Fi este dezactivat!</string>
-    <string name="notification_wifi_off_text">Headunit Revived are nevoie de Wi-Fi pentru conectare.</string>
+    <string name="notification_wifi_off_text">Open Headunit are nevoie de Wi-Fi pentru conectare.</string>
     <string name="action_turn_on_wifi">PORNIRE WI-FI</string>
     <string name="auto_start_on_app_start">La pornirea aplicației</string>
 

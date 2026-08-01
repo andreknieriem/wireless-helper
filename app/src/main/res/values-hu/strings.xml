@@ -58,7 +58,7 @@
     <string name="settings_header">BEÁLLÍTÁSOK</string>
     <string name="version">Verzió</string>
     <string name="about">Névjegy és támogatás</string>
-    <string name="about_description">Könnyű trigger a Headunit Revived-hoz</string>
+    <string name="about_description">Könnyű trigger a Open Headunit-hoz</string>
 
     <!-- Language -->
     <string name="language_label">Nyelv</string>
@@ -92,7 +92,7 @@
     <string name="connected">Csatlakozva</string>
 
     <!-- About Dialog -->
-    <string name="about_dialog_body">A Wireless Helper egy indító alkalmazás a Headunit Revived-hoz.\n\nFejlesztette: André Rinas\n© 2026</string>
+    <string name="about_dialog_body">A Wireless Helper egy indító alkalmazás a Open Headunit-hoz.\n\nFejlesztette: André Rinas\n© 2026</string>
 
     <!-- Bluetooth -->
     <string name="bt_disabled">A Bluetooth ki van kapcsolva. Kérjük, kapcsolja be az eszközök kiválasztásához.</string>
@@ -107,7 +107,7 @@
 
     <string name="channel_name_alerts">Csatlakozási riasztások</string>
     <string name="notification_wifi_off_title">A Wi-Fi ki van kapcsolva!</string>
-    <string name="notification_wifi_off_text">A Headunit Revived-nak Wi-Fi-re van szüksége a csatlakozáshoz.</string>
+    <string name="notification_wifi_off_text">A Open Headunit-nak Wi-Fi-re van szüksége a csatlakozáshoz.</string>
     <string name="action_turn_on_wifi">WI-FI BEKAPCSOLÁSA</string>
     <string name="auto_start_on_app_start">Alkalmazás indításakor</string>
 

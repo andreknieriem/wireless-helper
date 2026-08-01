@@ -58,7 +58,7 @@
     <string name="settings_header">AJUSTES</string>
     <string name="version">Versión</string>
     <string name="about">Acerca de y Soporte</string>
-    <string name="about_description">Activador ligero para Headunit Revived</string>
+    <string name="about_description">Activador ligero para Open Headunit</string>
 
     <!-- Language -->
     <string name="language_label">Idioma</string>
@@ -90,7 +90,7 @@
     <string name="state_off">Desactivado</string>
     <string name="connected">Conectado</string>
 
-    <string name="about_dialog_body">Wireless Helper es una aplicación de activación para Headunit Revived.\n\nDesarrollada por André Rinas\n© 2026</string>
+    <string name="about_dialog_body">Wireless Helper es una aplicación de activación para Open Headunit.\n\nDesarrollada por André Rinas\n© 2026</string>
 
     <string name="bt_disabled">Bluetooth está desactivado. Por favor, actívelo para seleccionar dispositivos.</string>
     <string name="no_paired_devices">No se encontraron dispositivos Bluetooth emparejados</string>
@@ -104,7 +104,7 @@
 
     <string name="channel_name_alerts">Alertas de conexión</string>
     <string name="notification_wifi_off_title">¡Wi-Fi desactivado!</string>
-    <string name="notification_wifi_off_text">Headunit Revived necesita Wi-Fi para conectarse.</string>
+    <string name="notification_wifi_off_text">Open Headunit necesita Wi-Fi para conectarse.</string>
     <string name="action_turn_on_wifi">ACTIVAR WI-FI</string>
     <string name="auto_start_on_app_start">Al iniciar la app</string>
 

@@ -58,7 +58,7 @@
     <string name="settings_header">USTAWIENIA</string>
     <string name="version">Wersja</string>
     <string name="about">O aplikacji i wsparcie</string>
-    <string name="about_description">Lekki wyzwalacz dla Headunit Revived</string>
+    <string name="about_description">Lekki wyzwalacz dla Open Headunit</string>
 
     <!-- Language -->
     <string name="language_label">Język</string>
@@ -92,7 +92,7 @@
     <string name="connected">Połączono</string>
 
     <!-- About Dialog -->
-    <string name="about_dialog_body">Wireless Helper to aplikacja wyzwalająca dla Headunit Revived.\n\nStworzona przez André Rinas\n© 2026</string>
+    <string name="about_dialog_body">Wireless Helper to aplikacja wyzwalająca dla Open Headunit.\n\nStworzona przez André Rinas\n© 2026</string>
 
     <!-- Bluetooth -->
     <string name="bt_disabled">Bluetooth jest wyłączony. Włącz go, aby wybrać urządzenia.</string>
@@ -107,7 +107,7 @@
 
     <string name="channel_name_alerts">Alerty połączenia</string>
     <string name="notification_wifi_off_title">Wi-Fi jest wyłączone!</string>
-    <string name="notification_wifi_off_text">Headunit Revived wymaga Wi-Fi do połączenia.</string>
+    <string name="notification_wifi_off_text">Open Headunit wymaga Wi-Fi do połączenia.</string>
     <string name="action_turn_on_wifi">WŁĄCZ WI-FI</string>
     <string name="auto_start_on_app_start">Przy starcie aplikacji</string>
 
