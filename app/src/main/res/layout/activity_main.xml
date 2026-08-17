@@ -557,6 +557,47 @@
                         android:textSize="14sp"/>
                 </LinearLayout>
 
+                <!-- Persistent connection log capture -->
+                <LinearLayout
+                    android:id="@+id/layoutLogCapture"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_item_middle"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/log_capture_title"
+                            android:textColor="@color/text_title"
+                            android:textSize="16sp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/log_capture_desc"
+                            android:textColor="@color/text_subtitle"
+                            android:textSize="12sp"/>
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchLogCapture"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false"/>
+                </LinearLayout>
+
                 <!-- Export Log -->
                 <LinearLayout
                     android:id="@+id/layoutExportLog"
