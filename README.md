@@ -55,6 +55,9 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.9.4
+- Added Warning notice for Android Auto 17.4 and newer.
+
 ### v.1.9.3
 - Sync Nearby Connections SERVICE_ID with HUR's rename to Open Headunit
 

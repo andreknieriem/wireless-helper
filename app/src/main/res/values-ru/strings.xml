@@ -145,4 +145,10 @@
     <string name="bt_start_delay_none">Без задержки</string>
     <string name="bt_start_delay_seconds">%d секунд</string>
     <string name="notif_starting_in">Запуск через %d секунд…</string>
+
+    <!-- Android Auto 17.4+ Notice -->
+    <string name="aa174_notice_title">Важное уведомление: Android Auto 17.4+</string>
+    <string name="aa174_notice_message"><![CDATA[Начиная с Android Auto 17.4, Google внесла изменения, блокирующие автозапуск через Wireless Helper и классический режим Self-Mode.<br/><br/><b>Доступные решения:</b><br/><br/><b>1. Headunit Server (режим разработчика):</b><br/>Единственное решение для Self-Mode! На телефоне откройте настройки разработчика Android Auto и выберите "Запустить сервер головного устройства".<br/><br/><b>2. Нативный режим:</b><br/>Подключение напрямую через Wi-Fi Direct или точку доступа устройства.<br/><br/><b>3. Беспроводной USB-адаптер:</b><br/>Аппаратный USB-донгл обеспечивает наилучшую стабильность.<br/><br/><b>4. Wireless Helper:</b><br/>Надежно работает на версиях Android Auto до 17.3 включительно.]]></string>
+    <string name="aa174_notice_button_confirm">Понятно</string>
+    <string name="aa174_notice_button_guide">Открыть инструкцию</string>
 </resources>

@@ -124,4 +124,10 @@
     <string name="bt_start_delay_none">Bez opóźnienia</string>
     <string name="bt_start_delay_seconds">%d sekund</string>
     <string name="notif_starting_in">Uruchamianie za %d sekund…</string>
+
+    <!-- Android Auto 17.4+ Notice -->
+    <string name="aa174_notice_title">Ważna informacja: Android Auto 17.4+</string>
+    <string name="aa174_notice_message"><![CDATA[Począwszy od Android Auto 17.4, Google wprowadziło zmiany, które uniemożliwiają automatyczne uruchamianie przez Wireless Helper oraz klasyczny tryb Self-Mode.<br/><br/><b>Dostępne rozwiązania:</b><br/><br/><b>1. Headunit Server (tryb programisty):</b><br/>Jedyne działające rozwiązanie dla Self-Mode! W telefonie otwórz ustawienia programistyczne Android Auto i dotknij "Uruchom serwer jednostki głównej".<br/><br/><b>2. Tryb natywny:</b><br/>Łączy się bezpośrednio przez Wi-Fi Direct lub punkt dostępu jednostki.<br/><br/><b>3. Bezprzewodowy adapter USB:</b><br/>Sprzętowy dongle USB zapewnia najbardziej stabilne połączenie.<br/><br/><b>4. Wireless Helper:</b><br/>Działa niezawodnie w wersjach Android Auto do 17.3 włącznie.]]></string>
+    <string name="aa174_notice_button_confirm">Rozumiem</string>
+    <string name="aa174_notice_button_guide">Otwórz poradnik</string>
 </resources>

@@ -118,5 +118,11 @@
     <string name="bt_start_delay_none">Gecikme yok</string>
     <string name="bt_start_delay_seconds">%d saniye</string>
     <string name="notif_starting_in">%d saniye içinde başlatılıyor…</string>
+
+    <!-- Android Auto 17.4+ Notice -->
+    <string name="aa174_notice_title">Önemli Bildirim: Android Auto 17.4+</string>
+    <string name="aa174_notice_message"><![CDATA[Android Auto 17.4 sürümünden itibaren Google, Wireless Helper ile otomatik başlatmayı ve klasik Self-Mode özelliğini devre dışı bırakan değişiklikler yaptı.<br/><br/><b>Mevcut çözümler:</b><br/><br/><b>1. Headunit Server (Geliştirici Modu):</b><br/>Self-Mode için kalan tek çalışan çözüm! Telefonunuzda Android Auto geliştirici ayarlarını açın ve "Headunit sunucusunu başlat" seçeneğine dokunun.<br/><br/><b>2. Yerel (Native) Mod:</b><br/>Wi-Fi Direct veya araç sıcak noktası üzerinden doğrudan bağlanır.<br/><br/><b>3. Kablosuz USB Adaptörü:</b><br/>Donanımsal bir USB kablosuz adaptör en kararlı deneyimi sunar.<br/><br/><b>4. Wireless Helper:</b><br/>Android Auto 17.3 ve önceki sürümlerde sorunsuz çalışmaya devam etmektedir.]]></string>
+    <string name="aa174_notice_button_confirm">Anladım</string>
+    <string name="aa174_notice_button_guide">Kılavuzu Aç</string>
 </resources>
 

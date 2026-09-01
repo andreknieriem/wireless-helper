@@ -1003,7 +1003,10 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
         val currentMode = prefs.getInt("connection_mode", 0)
         if (currentMode == 1 || currentMode == 2) { // Phone or Tablet Hotspot
-            checkWriteSettingsPermission()
+            if (!checkWriteSettingsPermission()) return
+        }
+        if (activeSetupDialog == null) {
+            Aa174Notice.maybeShow(this)
         }
     }
 
@@ -1057,6 +1060,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(statusPoller)
+        Aa174Notice.dismiss()
     }
 
     override fun onNewIntent(intent: Intent) {
