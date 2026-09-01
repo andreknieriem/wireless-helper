@@ -1,45 +1,78 @@
-# Privacy Policy for Wireless Helper
+# Privacy Policy for Wireless Helper (Open Headunit, former Headunit Revived)
 
-Last updated: February 23, 2026
+**Last updated:** September 1, 2026
 
-Wireless Helper ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information through our mobile application.
+This Privacy Policy applies to the mobile application **Wireless Helper (Open Headunit)** (also known as **Wireless Helper**, package name: `com.andrerinas.wirelesshelper`), developed and published by **André Rinas** ("we", "our", or "us").
 
-## 1. Important Disclosure: Location Data Access
+We are committed to protecting your personal data and your privacy. This policy explains our practices regarding the handling of information in connection with our mobile application.
 
-**Wireless Helper requires access to your device's location data, including in the background, solely to enable the "Auto-start on Wi-Fi" feature.**
+---
 
-*   **Why we need it:** Android requires the "Fine Location" and "Background Location" permissions to allow an application to access the name of the connected Wi-Fi network (SSID). 
-*   **How we use it:** The app checks the SSID of the connected Wi-Fi network to determine if it matches the network you have selected for automatic triggering of Android Auto.
-*   **Storage and Sharing:** We **do not** collect, store, or transmit your location data to any server. All processing happens strictly locally on your device. We **do not** share your location data with any third parties.
-*   **User Choice:** Access to location is optional and only required if you choose to use the Wi-Fi auto-start feature.
+## 1. Developer and Application Identification
 
-## 2. Information Collection and Use
+*   **Application Name:** Wireless Helper (Open Headunit) / Wireless Helper
+*   **Package Name:** `com.andrerinas.wirelesshelper`
+*   **Developer / Publisher:** André Rinas
+*   **Contact Email:** headunit@andrerinas.com
+*   **Official Website:** https://headunit.andrerinas.com
 
-**We do not collect any personally identifiable information (PII).**
+---
 
-Wireless Helper is a utility tool designed to act as a bridge/proxy for Android Auto. We do not track user behavior, usage habits, or personal identities.
+## 2. Important Disclosure: Location Data Access
 
-## 3. Permissions
+**Wireless Helper (Open Headunit) requires access to your device's location data, including in the background, solely to enable the "Auto-start on Wi-Fi" automation feature.**
 
-The application requests the following permissions to fulfill its purpose:
+*   **Why we need it:** Starting with Android 8.0 (and strictly enforced in Android 10+), the Android operating system requires the `ACCESS_FINE_LOCATION` and `ACCESS_BACKGROUND_LOCATION` permissions to allow any application to read the network name (SSID) or BSSID of the currently connected Wi-Fi network.
+*   **How we use it:** The application checks the Wi-Fi network SSID only to determine if your phone has connected to your car's Wi-Fi hotspot or Wi-Fi Direct network, so it can automatically trigger the wireless connection handshake for Android Auto without manual interaction.
+*   **No Storage, No Tracking, No Sharing:** We **do not** collect, log, track, store, or transmit your geographical coordinates, GPS position, or location history. All SSID checks occur strictly locally on your device in real-time. Your location data is **never** sent to any external server and is **never** shared with third parties.
+*   **User Choice & Control:** Location access is completely optional. If you do not use Wi-Fi auto-start (for example, if you use Bluetooth auto-start or manual connection), you can decline or revoke location permissions at any time in system settings without affecting other connection modes.
 
-*   **Location (Fine/Background):** Used exclusively to identify the Wi-Fi network name (SSID) for automation triggers.
-*   **Bluetooth:** Used to detect connections to vehicle Bluetooth systems to trigger the service.
-*   **Notifications:** Used to display a required foreground service notification while the app is active.
-*   **Nearby Devices:** Used on newer Android versions to scan for Bluetooth triggers without requiring location data.
+---
 
-## 4. Data Security
+## 3. Information Collection and Processing
 
-Since we do not collect or store any data, there is no risk of data breaches from our side. The communication between your phone and the headunit is a direct local connection.
+**We do not collect, store, sell, or share any personally identifiable information (PII).**
 
-## 5. Third-Party Services
+Wireless Helper is a local connectivity tool designed to act as a bridge and trigger for Android Auto. We do not track user behavior, app usage habits, device identifiers, or personal identities.
 
-The app does not use any third-party analytics, advertising, or tracking SDKs.
+---
 
-## 6. Changes to This Policy
+## 4. Permissions Requested
 
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
+The application requests the following permissions strictly for technical connectivity:
 
-## 7. Contact Us
+*   **Location (`ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`):** Required by Android exclusively to read the connected Wi-Fi SSID for automated connection triggering.
+*   **Bluetooth (`BLUETOOTH`, `BLUETOOTH_CONNECT`, `BLUETOOTH_SCAN`):** Used to detect when your phone connects to your vehicle's hands-free Bluetooth system to trigger the Android Auto wireless handshake.
+*   **Nearby Devices (`NEARBY_WIFI_DEVICES`):** Used on Android 13+ for Wi-Fi Direct (P2P) and Google Nearby Connections discovery without needing precise location access.
+*   **Notifications (`POST_NOTIFICATIONS`):** Used to display a persistent foreground service notification while the helper service is actively running or searching for your head unit.
+*   **Foreground Service (`FOREGROUND_SERVICE`):** Keeps the background helper service alive while negotiating or maintaining the connection with your head unit.
 
-If you have any questions about this Privacy Policy, please contact us at our official support channels.
+---
+
+## 5. Third-Party Services and Analytics
+
+*   **No Analytics:** The app does not include Google Analytics, Firebase Analytics, or any other usage-tracking SDKs.
+*   **No Advertising:** The app is completely ad-free and contains no advertising SDKs.
+*   **No Third-Party Data Sharing:** No user data or device information is ever shared with, sold to, or monetized by third parties.
+
+---
+
+## 6. Data Security and Retention
+
+Because our application does not collect, transmit, or store personal user data on external servers, there is no risk of remote data breaches or server-side data leaks. All configuration settings (such as chosen Bluetooth MAC addresses or Wi-Fi SSIDs) are stored locally on your device in private app storage (`SharedPreferences`) and are deleted immediately when you uninstall the application or clear app data.
+
+---
+
+## 7. Changes to This Privacy Policy
+
+We may update our Privacy Policy from time to time. Any changes will be reflected by updating the "Last updated" date at the top of this document.
+
+---
+
+## 8. Contact Us
+
+If you have questions, concerns, or requests regarding this Privacy Policy or the data practices of **Wireless Helper (Open Headunit)**, please contact:
+
+*   **Developer:** André Rinas
+*   **Email:** headunit@andrerinas.com
+*   **Project Repository:** https://github.com/andreknieriem/wireless-helper
