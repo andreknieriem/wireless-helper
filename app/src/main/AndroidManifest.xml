@@ -28,6 +28,8 @@
 
     <queries>
         <package android:name="com.google.android.projection.gearhead" />
+        <!-- Legacy home of the WIFI_ACTION_BRIDGE activity, used by the trigger fallback chain. -->
+        <package android:name="com.google.android.gms" />
     </queries>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />

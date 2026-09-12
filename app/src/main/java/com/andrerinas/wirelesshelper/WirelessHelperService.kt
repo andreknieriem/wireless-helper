@@ -22,6 +22,8 @@ import com.andrerinas.wirelesshelper.strategy.StrategySharedNetwork
 import com.andrerinas.wirelesshelper.strategy.StrategyWifiDirect
 import com.andrerinas.wirelesshelper.net.WifiNetworkBinding
 import com.andrerinas.wirelesshelper.strategy.StrategyNearby
+import com.andrerinas.wirelesshelper.utils.HelperLog
+import com.andrerinas.wirelesshelper.utils.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +56,13 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
     override fun onCreate() {
         super.onCreate()
+        // Before anything else that logs: the connect path is the part worth capturing, and it
+        // starts here.
+        HelperLog.init(
+            this,
+            Prefs.get(this).getBoolean(HelperLog.PREF_CAPTURE_ENABLED, false)
+        )
+        HelperLog.i(TAG, "WirelessHelperService: onCreate (${Build.MANUFACTURER} ${Build.MODEL}, API ${Build.VERSION.SDK_INT})")
         setupLocks()
         createNotificationChannel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

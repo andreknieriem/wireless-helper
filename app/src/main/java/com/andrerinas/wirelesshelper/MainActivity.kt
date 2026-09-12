@@ -30,6 +30,7 @@ import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.andrerinas.wirelesshelper.utils.HelperLog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -78,6 +79,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvWifiDirectNameValue: TextView
     private lateinit var layoutLanguage: View
     private lateinit var tvLanguageValue: TextView
+    private lateinit var layoutLogCapture: View
+    private lateinit var switchLogCapture: androidx.appcompat.widget.SwitchCompat
     private lateinit var layoutExportLog: View
     private lateinit var tvVersionValue: TextView
     private lateinit var layoutAbout: View
@@ -208,6 +211,8 @@ class MainActivity : AppCompatActivity() {
         tvWifiDirectNameValue = findViewById(R.id.tvWifiDirectNameValue)
         layoutLanguage = findViewById(R.id.layoutLanguage)
         tvLanguageValue = findViewById(R.id.tvLanguageValue)
+        layoutLogCapture = findViewById(R.id.layoutLogCapture)
+        switchLogCapture = findViewById(R.id.switchLogCapture)
         layoutExportLog = findViewById(R.id.layoutExportLog)
         tvVersionValue = findViewById(R.id.tvVersionValue)
         layoutAbout = findViewById(R.id.layoutAbout)
@@ -228,6 +233,16 @@ class MainActivity : AppCompatActivity() {
 
         layoutStaticIp.setOnClickListener { showStaticIpDialog() }
         layoutHotspotCredentials.setOnClickListener { showHotspotCredentialsDialog() }
+
+        layoutLogCapture.setOnClickListener {
+            val enabled = !switchLogCapture.isChecked
+            switchLogCapture.isChecked = enabled
+            getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
+                .edit { putBoolean(HelperLog.PREF_CAPTURE_ENABLED, enabled) }
+            // Apply now rather than at the next service start: the reason someone reaches for this
+            // is that the next connection attempt is the one they want recorded.
+            HelperLog.init(this, enabled)
+        }
 
         layoutExportLog.setOnClickListener { exportLogs() }
 
@@ -557,6 +572,7 @@ class MainActivity : AppCompatActivity() {
         switchBtAutoReconnect.isChecked = prefs.getBoolean("bt_auto_reconnect", false)
         switchHotspotForceStop.isChecked = prefs.getBoolean("force_stop_hotspot", false)
         switchBtDisconnectStop.isChecked = prefs.getBoolean("bt_disconnect_stop", false)
+        switchLogCapture.isChecked = prefs.getBoolean(HelperLog.PREF_CAPTURE_ENABLED, false)
         val langTag = prefs.getString("app_language", "") ?: ""
         val langIndex = languageTags.indexOf(langTag).coerceAtLeast(0)
         tvLanguageValue.text = languageOptions[langIndex]
@@ -912,6 +928,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Appends every persisted capture, oldest first, to the export being written.
+     *
+     * Best-effort by design: a capture that cannot be read is worth a note in the export rather
+     * than an abandoned export, because the logcat dump that follows is still useful on its own.
+     */
+    private fun writePersistedCaptures(out: java.io.OutputStream) {
+        val dir = getExternalFilesDir(null) ?: return
+        val captures = dir.listFiles { f -> f.isFile && f.name.startsWith("WH_Log_") }
+            ?.sortedBy { it.lastModified() }
+            .orEmpty()
+
+        if (captures.isEmpty()) {
+            out.write(
+                ("===== no persisted capture =====\n" +
+                        "Turn on \"Persistent connection log\" in settings and reproduce the problem " +
+                        "to record one.\n").toByteArray()
+            )
+            return
+        }
+
+        captures.forEach { file ->
+            out.write("\n===== capture: ${file.name} =====\n".toByteArray())
+            try {
+                file.inputStream().use { it.copyTo(out) }
+            } catch (e: Exception) {
+                out.write("<unreadable: ${e.message}>\n".toByteArray())
+            }
+        }
+    }
+
     private fun exportLogs() {
         val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
         val fileName = "WirelessHelper_Log_$timeStamp.txt"
@@ -948,6 +995,12 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
+            // Persisted captures first. logcat's ring buffer only holds the last few minutes on a
+            // busy device, so a fault that happened on the drive home is usually already gone by
+            // the time anyone gets to this screen; the capture files are the part that survives.
+            writePersistedCaptures(outputStream)
+
+            outputStream.write("\n===== logcat (-v threadtime) =====\n".toByteArray())
             val buffer = ByteArray(8192)
             var bytesRead: Int
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {

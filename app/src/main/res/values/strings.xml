@@ -73,6 +73,8 @@
     <string name="overlay_perm_button">Grant Permission</string>
     <string name="not_set">Not set</string>
     
+    <string name="log_capture_title">Persistent connection log</string>
+    <string name="log_capture_desc">Keep recording the connection to a file, so a failure that happens in the car can still be exported later. Leave off for normal use.</string>
     <string name="logs_label">Export Logs</string>
     <string name="export_log_description">Save system logs to a file for debugging</string>
     <string name="export_log_title">Logs Exported</string>
