@@ -1,0 +1,25 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- v1 is localized in English and Russian; other locales use this fallback. -->
+    <string name="dev_combined_hint" translatable="false">%1$s\n\n%2$s</string>
+    <string name="mode_wifi_direct_dev_root">Wi-Fi Direct · Dev server (root)</string>
+    <string name="dev_mode_hint">Requires root and Android Auto developer setup. On Open Headunit select Headunit Server → Auto and enable automatic Wi-Fi Direct. This mode manages the server, including one started manually. Reconnect is automatic; Stop or 5 seconds without the selected Bluetooth devices shuts it down.</string>
+    <string name="dev_checking_root">Checking root access…</string>
+    <string name="dev_error_wifi">Could not enable Wi-Fi. Turn it on and retry.</string>
+    <string name="dev_session_hint">TCP connected is not confirmation of an Android Auto session. Check the projection on the head unit.</string>
+    <string name="dev_starting">Starting Dev server…</string>
+    <string name="dev_searching">Dev server mode: searching for OpenHU…</string>
+    <string name="dev_p2p_connected">Wi-Fi Direct connected; preparing Dev server…</string>
+    <string name="dev_ready">Wi-Fi Direct connected; Dev server ready</string>
+    <string name="dev_tcp_connected">Dev server TCP connected</string>
+    <string name="dev_tcp_label">TCP connected</string>
+    <string name="dev_recovering">Recovering Dev server connection…</string>
+    <string name="dev_stopping">Stopping Dev server…</string>
+    <string name="dev_stopped">Dev server stopped</string>
+    <string name="dev_error_root">Root access was denied or su is unavailable. Grant root to Wireless Helper and retry.</string>
+    <string name="dev_error_aa">Android Auto is not installed for this user.</string>
+    <string name="dev_error_component">This Android Auto version does not expose the expected Dev server component.</string>
+    <string name="dev_error_state">Cannot read Dev server state through root, or a command timed out.</string>
+    <string name="dev_error_start">Dev server did not expose a usable listener on TCP 5277. Check Android Auto developer settings.</string>
+    <string name="dev_error_stop">Could not confirm Dev server shutdown. Stop it in Android Auto settings; cleanup will be retried on the next launch.</string>
+    <string name="dev_aa174_notice">Android Auto 17.4+ blocks the legacy Wireless Helper trigger. On a rooted phone use Wi-Fi Direct · Dev server (root), with Headunit Server → Auto and automatic Wi-Fi Direct on Open Headunit. Without root, start the headunit server manually in Android Auto settings or use a supported Native connection.</string>
+</resources>

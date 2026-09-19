@@ -31,7 +31,7 @@ object Aa174Notice {
         if (dialog?.isShowing == true) return
 
         try {
-            val rawMessage = activity.getString(R.string.aa174_notice_message)
+            val rawMessage = activity.getString(R.string.dev_aa174_notice)
             val messageSpanned = HtmlCompat.fromHtml(
                 rawMessage.replace("\n", "<br/>"),
                 HtmlCompat.FROM_HTML_MODE_LEGACY

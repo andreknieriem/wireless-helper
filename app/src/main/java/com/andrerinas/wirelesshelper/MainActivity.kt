@@ -36,6 +36,9 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import java.io.File
 import java.io.FileOutputStream
+import com.andrerinas.wirelesshelper.devserver.*
+import com.andrerinas.wirelesshelper.strategy.StrategyWifiDirectDevServer
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,6 +48,7 @@ class MainActivity : AppCompatActivity() {
         const val MODE_PASSIVE = 2
         const val MODE_WIFI_DIRECT = 3
         const val MODE_NEARBY = 4
+        const val MODE_WIFI_DIRECT_DEV_ROOT = StrategyWifiDirectDevServer.MODE
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -52,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     ) { _: Boolean -> }
 
     private var activeSetupDialog: android.app.Dialog? = null
+    private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private lateinit var btnToggleService: Button
     private lateinit var layoutConnectionMode: View
@@ -103,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         override fun run() {
             val running = WirelessHelperService.isRunning
             val connected = WirelessHelperService.isConnected
+            findViewById<TextView>(R.id.tvDevServerStatus).text = WirelessHelperService.devStatus ?: ""
             if (running != lastRunningState || connected != lastConnectedState) {
                 updateButtonState(running, connected)
                 lastRunningState = running
@@ -118,7 +124,8 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.mode_hotspot_phone),
             getString(R.string.mode_passive),
             getString(R.string.mode_wifi_direct),
-            getString(R.string.mode_nearby)
+            getString(R.string.mode_nearby),
+            getString(R.string.mode_wifi_direct_dev_root)
         )
     }
 
@@ -171,6 +178,12 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         setupListeners()
         restoreState()
+        if (!WirelessHelperService.isRunning && getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE)
+                .getBoolean(StrategyWifiDirectDevServer.MANAGED_KEY, false)) {
+            ContextCompat.startForegroundService(this, Intent(this, WirelessHelperService::class.java).apply {
+                action = WirelessHelperService.ACTION_RECOVER
+            })
+        }
         handleIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -255,9 +268,30 @@ class MainActivity : AppCompatActivity() {
             MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
                 .setTitle(R.string.connection_mode_label)
                 .setSingleChoiceItems(connectionModes, currentMode) { dialog, which ->
+                    if (which == MODE_WIFI_DIRECT_DEV_ROOT) {
+                        dialog.dismiss()
+                        Toast.makeText(this, R.string.dev_checking_root, Toast.LENGTH_SHORT).show()
+                        uiScope.launch {
+                            try {
+                                DevServerController.checkRoot(SuCommandRunner())
+                                AndroidDevServer.create(this@MainActivity)
+                                prefs.edit { putInt("connection_mode", which) }
+                                tvConnectionModeValue.text = connectionModes[which]
+                                updateModeSpecificUI(which)
+                                if (WirelessHelperService.isRunning) startLauncherService()
+                            } catch (_: TimeoutCancellationException) {
+                                Toast.makeText(this@MainActivity, R.string.dev_error_root, Toast.LENGTH_LONG).show()
+                            } catch (e: CancellationException) { throw e
+                            } catch (e: DevServerException) {
+                                Toast.makeText(this@MainActivity, devErrorResource(e.error), Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        return@setSingleChoiceItems
+                    }
                     prefs.edit { putInt("connection_mode", which) }
                     tvConnectionModeValue.text = connectionModes[which]
                     updateModeSpecificUI(which)
+                    if (WirelessHelperService.isRunning) startLauncherService()
                     
                     if (which == 1 || which == 2) { // Phone or Tablet Hotspot
                         checkWriteSettingsPermission()
@@ -596,7 +630,7 @@ class MainActivity : AppCompatActivity() {
         val currentDirectSet = prefs.getStringSet("wifi_direct_target_names", null)?.toMutableSet()
         if (currentDirectSet == null) {
             // Initial run or first time after update
-            val newSet = mutableSetOf("HURev") // Always default to HURev
+            val newSet = mutableSetOf("HURev", "OpenHU")
             if (!oldDirectName.isNullOrEmpty() && oldDirectName != "HURev") {
                 newSet.add(oldDirectName)
             }
@@ -604,6 +638,8 @@ class MainActivity : AppCompatActivity() {
                 putStringSet("wifi_direct_target_names", newSet)
                 remove("wifi_direct_target_name")
             }
+        } else if (currentDirectSet == setOf("HURev")) {
+            prefs.edit { putStringSet("wifi_direct_target_names", setOf("HURev", "OpenHU")); remove("wifi_direct_target_name") }
         } else if (!oldDirectName.isNullOrEmpty()) {
             // Clean up old key if it still exists
             prefs.edit { remove("wifi_direct_target_name") }
@@ -614,7 +650,16 @@ class MainActivity : AppCompatActivity() {
         layoutHotspotForceStop.visibility = if (mode == MODE_HOTSPOT_PHONE) View.VISIBLE else View.GONE
         layoutStaticIp.visibility = if (mode == MODE_PASSIVE) View.VISIBLE else View.GONE
         layoutHotspotCredentials.visibility = if (mode == MODE_PASSIVE) View.VISIBLE else View.GONE
-        layoutWifiDirectName.visibility = if (mode == MODE_WIFI_DIRECT) View.VISIBLE else View.GONE
+        val devMode = mode == MODE_WIFI_DIRECT_DEV_ROOT
+        findViewById<TextView>(R.id.tvDevModeHint).text = getString(
+            R.string.dev_combined_hint,
+            getString(R.string.dev_mode_hint),
+            getString(R.string.dev_session_hint)
+        )
+        layoutWifiDirectName.visibility = if (mode == MODE_WIFI_DIRECT || devMode) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.tvDevModeHint).visibility = if (devMode) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.tvDevServerStatus).visibility = if (devMode) View.VISIBLE else View.GONE
+        updateAutoStartUI(getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("auto_start_mode", 0))
         // For nearby, we might want to hide other things or show a specific hint in the future.
     }
 
@@ -622,8 +667,9 @@ class MainActivity : AppCompatActivity() {
         tvAutoStartValue.text = autoStartModes.getOrElse(mode) { autoStartModes[0] }
         val btVis = if (mode == 1) View.VISIBLE else View.GONE
         layoutBluetoothDevice.visibility = btVis
-        layoutBtAutoReconnect.visibility = btVis
-        layoutBtDisconnectStop.visibility = btVis
+        val devMode = getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("connection_mode", 0) == MODE_WIFI_DIRECT_DEV_ROOT
+        layoutBtAutoReconnect.visibility = if (devMode) View.GONE else btVis
+        layoutBtDisconnectStop.visibility = if (devMode) View.GONE else btVis
         layoutBtStartDelay.visibility = btVis
         layoutWifiNetwork.visibility = if (mode == 2) View.VISIBLE else View.GONE
     }
@@ -661,7 +707,8 @@ class MainActivity : AppCompatActivity() {
         val colorTeal = ContextCompat.getColor(this, R.color.brand_teal)
         val colorGreen = ContextCompat.getColor(this, android.R.color.holo_green_dark)
         if (connected) {
-            btnToggleService.text = getString(R.string.connected)
+            val devMode = getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("connection_mode", 0) == MODE_WIFI_DIRECT_DEV_ROOT
+            btnToggleService.text = getString(if (devMode) R.string.dev_tcp_label else R.string.connected)
             btnToggleService.background.setTint(colorGreen)
             startPulseAnimation(1500)
         } else if (running) {
@@ -850,7 +897,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showWifiDirectNameSelector() {
         val prefs = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE)
-        val names = prefs.getStringSet("wifi_direct_target_names", mutableSetOf("HURev"))?.toMutableSet() ?: mutableSetOf("HURev")
+        val names = prefs.getStringSet("wifi_direct_target_names", setOf("HURev", "OpenHU"))?.toMutableSet() ?: mutableSetOf("HURev", "OpenHU")
 
         val dialogView = LayoutInflater.from(this).inflate(R.layout.layout_wifi_direct_names_dialog, null)
         val container = dialogView.findViewById<android.widget.LinearLayout>(R.id.container_names)
@@ -1063,6 +1110,11 @@ class MainActivity : AppCompatActivity() {
         Aa174Notice.dismiss()
     }
 
+    override fun onDestroy() {
+        uiScope.cancel()
+        super.onDestroy()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -1075,16 +1127,18 @@ class MainActivity : AppCompatActivity() {
         if (data.scheme == "wirelesshelper") {
             when (data.host) {
                 "start" -> {
+                    val previousMode = getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("connection_mode", 0)
                     val modeParam = data.getQueryParameter("mode")
                     if (!modeParam.isNullOrEmpty()) {
-                        val modeIdx = when (modeParam.lowercase()) { "nsd" -> 0; "phone-hotspot" -> 1; "tablet-hotspot" -> 2; "wifi-direct" -> 3; else -> -1 }
+                        val modeIdx = when (modeParam.lowercase()) { "nsd" -> 0; "phone-hotspot" -> 1; "tablet-hotspot" -> 2; "wifi-direct" -> 3; "nearby" -> 4; DevModePolicy.URI_MODE -> MODE_WIFI_DIRECT_DEV_ROOT; else -> -1 }
                         if (modeIdx != -1) {
                             getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE).edit { putInt("connection_mode", modeIdx) }
                             tvConnectionModeValue.text = connectionModes[modeIdx]
+                            updateModeSpecificUI(modeIdx)
                         }
                     }
-                    if (!WirelessHelperService.isRunning) {
-                        val currentMode = getSharedPreferences("WirelessHelperPrefs", Context.MODE_PRIVATE).getInt("connection_mode", 0)
+                    val currentMode = getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("connection_mode", 0)
+                    if (!WirelessHelperService.isRunning || currentMode != previousMode) {
                         WifiNotificationHelper.checkWifiAndConnect(this, isFromUi = false, connectionMode = currentMode) { checkPermissionsAndStart() }
                     }
                 }
