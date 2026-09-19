@@ -11,7 +11,7 @@ A lightweight launcher utility for **Headunit Revived**.
 This app acts as a trigger to start Android Auto Wireless on your phone. It automatically detects your tablet running Headunit Revived via NSD (mDNS) or a passive TCP trigger, ensuring a seamless wireless connection experience.
 
 # WARNING
-**Since Android Auto 17.4, Google has removed the ability to connect wirelessly without bluetooth or the Headunit Server. This makes this app useless for Android Auto 17.4 and newer. Please check your Android Auto version before installing this app.**
+**Android Auto 17.4+ blocks the legacy Wireless Helper trigger.** This branch adds an opt-in **Wi-Fi Direct / Dev server (root)** mode using Android Auto's developer server instead. It requires root on the phone and a matching Open Headunit build. Native and older Helper modes retain their existing behavior. See [setup and device acceptance checks](docs/wifi-direct-dev-root.md).
 
 ## Features
 - **Auto-Trigger:** Fires the Android Auto wireless intent as soon as the Headunit is detected.
@@ -55,6 +55,16 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### v.1.9.5
+- Added opt-in Wi-Fi Direct / Dev server (root) mode for Android Auto 17.4+, paired with Open Headunit 3.4.1. Root is required only on the phone; the legacy wireless trigger and proxy are not used in this mode.
+- Added automatic Dev-server start/stop, passive readiness checks and separate P2P/server/TCP status messages in English and Russian. Manually started servers are managed too.
+- Supported Bluetooth auto-start, the Start button, tile, widget and `wirelesshelper://start?mode=wifi-direct-dev-root`; repeated starts do not restart an active root session.
+- Added automatic P2P/TCP recovery with retry backoff and a 5-second grace period after the last selected Bluetooth device disconnects. Stop cancels retries and cleans up the server and P2P connection.
+- Shared P2P discovery between both Wi-Fi Direct modes, extended the old HURev default with OpenHU while retaining custom names, and added interrupted-session cleanup on the next launch.
+- Added unit tests and [setup/build/device acceptance instructions](docs/wifi-direct-dev-root.md).
+
+Thanks to [@mixalbl4-127](https://github.com/mixalbl4-127)!
+
 ### v.1.9.4
 - Added Warning notice for Android Auto 17.4 and newer.
 

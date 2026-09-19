@@ -19,7 +19,8 @@ class AutoStartReceiver : BroadcastReceiver() {
         val autoStartMode = prefs.getInt("auto_start_mode", 0) // 0=Off, 1=BT
         val connectionMode = prefs.getInt("connection_mode", 0)
 
-        if (autoStartMode == 0) return
+        val devMode = connectionMode == com.andrerinas.wirelesshelper.strategy.StrategyWifiDirectDevServer.MODE
+        if (autoStartMode == 0 && !devMode) return
 
         val targetMacs = prefs.getStringSet("auto_start_bt_macs", emptySet()) ?: emptySet()
         val legacyTargetMac = prefs.getString("auto_start_bt_mac", null)
@@ -33,6 +34,34 @@ class AutoStartReceiver : BroadcastReceiver() {
 
         val deviceAddress = device?.address ?: return
         val isTarget = targetMacs.contains(deviceAddress) || deviceAddress == legacyTargetMac
+
+        if (devMode && isTarget) {
+            val connected = (prefs.getStringSet("dev_root_connected_bt", emptySet()) ?: emptySet()).toMutableSet()
+            if (action == BluetoothDevice.ACTION_ACL_DISCONNECTED) {
+                connected.remove(deviceAddress)
+                prefs.edit().putStringSet("dev_root_connected_bt", connected).apply()
+                if (connected.isEmpty()) prefs.edit().remove("pending_wifi_start").remove("dev_root_pending_bt").apply()
+                if (WirelessHelperService.isRunning) {
+                    context.startService(Intent(context, WirelessHelperService::class.java).apply {
+                        this.action = WirelessHelperService.ACTION_BT_DISCONNECTED
+                        putExtra(WirelessHelperService.EXTRA_BT_MAC, deviceAddress)
+                    })
+                }
+            } else if (action == BluetoothDevice.ACTION_ACL_CONNECTED && (autoStartMode == 1 || WirelessHelperService.isRunning)) {
+                connected.add(deviceAddress)
+                prefs.edit().putStringSet("dev_root_connected_bt", connected)
+                    .putBoolean("dev_root_pending_bt", true).apply()
+                if (WirelessHelperService.isRunning) startService(context, deviceAddress)
+                else WifiNotificationHelper.checkWifiAndConnect(context, connectionMode = connectionMode) {
+                    if (prefs.getBoolean("dev_root_pending_bt", false) &&
+                        prefs.getInt("connection_mode", 0) == connectionMode &&
+                        prefs.getStringSet("dev_root_connected_bt", emptySet())?.contains(deviceAddress) == true) {
+                        startService(context, deviceAddress)
+                    }
+                }
+            }
+            return
+        }
 
         val deviceDisplayName = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -95,10 +124,11 @@ class AutoStartReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun startService(context: Context) {
+    private fun startService(context: Context, mac: String? = null) {
         val serviceIntent = Intent(context, WirelessHelperService::class.java).apply {
             action = WirelessHelperService.ACTION_START
             putExtra("EXTRA_FROM_BT", true)
+            mac?.let { putExtra(WirelessHelperService.EXTRA_BT_MAC, it) }
         }
         try {
             Log.i(TAG, "Firing Foreground Service Intent with EXTRA_FROM_BT...")
