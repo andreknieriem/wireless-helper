@@ -127,6 +127,24 @@
                         android:textSize="14sp"/>
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tvDevModeHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:text="@string/dev_mode_hint"
+                    android:textColor="@color/text_subtitle"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvDevServerStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textColor="@color/text_title"
+                    android:accessibilityLiveRegion="polite"
+                    android:visibility="gone" />
+
                 <!-- 1b. Force Stop Hotspot (Only shown if mode 1) -->
                 <LinearLayout
                     android:id="@+id/layoutHotspotForceStop"

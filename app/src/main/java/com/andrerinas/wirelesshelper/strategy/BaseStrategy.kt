@@ -28,6 +28,7 @@ abstract class BaseStrategy(protected val context: Context, private val scope: C
 
     protected open val TAG = "HUREV_WIFI"
     private var activeProxy: AapProxy? = null
+    private var launchJob: Job? = null
     var stateListener: StateListener? = null
     protected val isLaunching = AtomicBoolean(false)
     protected var connectionEstablished = AtomicBoolean(false)
@@ -53,7 +54,7 @@ abstract class BaseStrategy(protected val context: Context, private val scope: C
         
         stopForLaunch()
 
-        scope.launch {
+        launchJob = scope.launch {
             try {
                 val hotspotNetwork = HotspotAutoConnect.currentNetwork
                 val boundWifi = WifiNetworkBinding.currentNetwork
@@ -149,6 +150,8 @@ abstract class BaseStrategy(protected val context: Context, private val scope: C
     }
 
     fun cleanup() {
+        launchJob?.cancel()
+        launchJob = null
         activeProxy?.stop()
         activeProxy = null
         isLaunching.set(false)

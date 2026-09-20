@@ -11,7 +11,7 @@ A lightweight launcher utility for **Headunit Revived**.
 This app acts as a trigger to start Android Auto Wireless on your phone. It automatically detects your tablet running Headunit Revived via NSD (mDNS) or a passive TCP trigger, ensuring a seamless wireless connection experience.
 
 # WARNING
-**Since Android Auto 17.4, Google has removed the ability to connect wirelessly without bluetooth or the Headunit Server. This makes this app useless for Android Auto 17.4 and newer. Please check your Android Auto version before installing this app.**
+**Android Auto 17.4+ blocks the legacy Wireless Helper trigger.** The opt-in **Wi-Fi Direct / Dev server (root)** mode bridges Android Auto's local developer server to the head unit. Root is required only on the phone. On the head unit select **Wireless Helper -> Wi-Fi Direct**; no special Dev-server checkbox or head-unit modification is needed. The author reports successful end-to-end projection with this bridge on the tested phone/head-unit pair. The full acceptance matrix and broader device compatibility remain unverified. See [setup and device acceptance checks](docs/wifi-direct-dev-root.md).
 
 ## Features
 - **Auto-Trigger:** Fires the Android Auto wireless intent as soon as the Headunit is detected.
@@ -44,6 +44,7 @@ Wireless Helper supports remote control via Android Intents and App Shortcuts.
 | `tablet-hotspot` | Tablet Hotspot     |
 | `wifi-direct`    | Wi-Fi Direct       |
 | `nearby`         | Google Nearby      |
+| `wifi-direct-dev-root` | Wi-Fi Direct / local Dev-server bridge (root) |
 
 ### ADB Examples
 ```bash
@@ -55,6 +56,22 @@ adb shell am start -a android.intent.action.VIEW -d "wirelesshelper://stop"
 ```
 
 ## Changelog
+### Unreleased - Dev-server bridge refactor
+- Replaced the root mode's direct head-unit-to-phone connection with a phone-side TCP bridge from the local Dev server on 5277 to the ordinary Helper input on 5288. The head unit now uses Wireless Helper / Wi-Fi Direct without code changes.
+- Replaced periodic connection-state root polling and idle server restarts with socket-owned lifecycle and bounded reconnect backoff. An unreachable head unit does not repeatedly restart Android Auto.
+- Retained mode ID 5, automation URI, root shutdown action, Bluetooth controls and other connection modes. Exit on the head unit may reconnect; use Stop in the helper for a definitive stop.
+- Added bridge, endpoint-selection and lifecycle tests. The author reports successful device testing of this transport; the full acceptance matrix and clean Gradle test/lint results remain unconfirmed. The application version remains unchanged during development.
+
+### v.1.9.5
+- Added opt-in Wi-Fi Direct / Dev server (root) mode for Android Auto 17.4+, paired with Open Headunit 3.4.1. Root is required only on the phone; the legacy wireless trigger and proxy are not used in this mode.
+- Added automatic Dev-server start/stop, passive readiness checks and separate P2P/server/TCP status messages in English and Russian. Manually started servers are managed too.
+- Supported Bluetooth auto-start, the Start button, tile, widget and `wirelesshelper://start?mode=wifi-direct-dev-root`; repeated starts do not restart an active root session.
+- Added automatic P2P/TCP recovery with retry backoff and a 5-second grace period after the last selected Bluetooth device disconnects. Stop cancels retries and cleans up the server and P2P connection.
+- Shared P2P discovery between both Wi-Fi Direct modes, extended the old HURev default with OpenHU while retaining custom names, and added interrupted-session cleanup on the next launch.
+- Added unit tests and [setup/build/device acceptance instructions](docs/wifi-direct-dev-root.md).
+
+Thanks to [@mixalbl4-127](https://github.com/mixalbl4-127)!
+
 ### v.1.9.4
 - Added Warning notice for Android Auto 17.4 and newer.
 

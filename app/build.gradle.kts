@@ -14,8 +14,8 @@ android {
         applicationId = "com.andrerinas.wirelesshelper"
         minSdk = 21
         targetSdk = 36
-        versionCode = 29
-        versionName = "1.9.4"
+        versionCode = 30
+        versionName = "1.9.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -70,6 +70,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     implementation("androidx.security:security-crypto:1.1.0")
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

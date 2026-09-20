@@ -16,6 +16,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import com.andrerinas.wirelesshelper.devserver.SuCommandRunner
 
 object WifiNotificationHelper {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -66,17 +69,18 @@ object WifiNotificationHelper {
         }
     }
 
-    private fun tryEnableWifiWithRoot(): Boolean {
+    private suspend fun tryEnableWifiWithRoot(): Boolean {
         return runRootCommand("cmd wifi set-wifi-enabled enabled") ||
             runRootCommand("svc wifi enable")
     }
 
-    private fun runRootCommand(command: String): Boolean {
+    private suspend fun runRootCommand(command: String): Boolean {
         return try {
-            val process = ProcessBuilder("su", "-c", command)
-                .redirectErrorStream(true)
-                .start()
-            process.waitFor() == 0
+            SuCommandRunner().run(command).exitCode == 0
+        } catch (_: TimeoutCancellationException) {
+            false
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             false
         }

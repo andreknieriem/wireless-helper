@@ -83,6 +83,8 @@ class WirelessHelperTileService : TileService() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             qsTile.subtitle = when {
+                running && getSharedPreferences("WirelessHelperPrefs", MODE_PRIVATE).getInt("connection_mode", 0) == com.andrerinas.wirelesshelper.devserver.DevModePolicy.MODE_ID ->
+                    WirelessHelperService.devStatus ?: getString(R.string.dev_searching)
                 connected -> getString(R.string.connected)
                 running -> getString(R.string.notif_searching)
                 else -> getString(R.string.state_off)
