@@ -8,11 +8,13 @@ import android.content.IntentFilter
 import android.net.wifi.WpsInfo
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pGroup
 import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.andrerinas.wirelesshelper.net.P2pLink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import java.net.NetworkInterface
 import kotlin.coroutines.resume
 
 /** All framework calls and callbacks are confined to the main looper. */
@@ -35,6 +38,7 @@ class WifiDirectClient(
         fun onConnected(host: String)
         fun onDisconnected()
         fun onUnavailable()
+        fun onNetworkChanged(link: P2pLink?) { }
     }
 
     private val manager = context.getSystemService(Context.WIFI_P2P_SERVICE) as? WifiP2pManager
@@ -43,6 +47,8 @@ class WifiDirectClient(
     private var generation = 0
     private var registered = false
     private var connectedHost: String? = null
+    private var connectedLink: P2pLink? = null
+    private var infoRequestId = 0L
     private var joinedTarget = false
     private var targetAddress: String? = null
     private var connectingAt: Long? = null
@@ -184,11 +190,12 @@ class WifiDirectClient(
     private fun requestInfo() {
         val ch = channel ?: return
         val gen = generation
+        val requestId = ++infoRequestId
         manager?.requestConnectionInfo(ch) { info ->
-            if (!running || gen != generation) return@requestConnectionInfo
+            if (!running || gen != generation || (requireClientRole && requestId != infoRequestId)) return@requestConnectionInfo
             if (info?.groupFormed != true) { disconnected(); return@requestConnectionInfo }
             manager?.requestGroupInfo(ch) { group ->
-                if (!running || gen != generation) return@requestGroupInfo
+                if (!running || gen != generation || (requireClientRole && requestId != infoRequestId)) return@requestGroupInfo
                 // Never adopt or remove a group belonging to another device/application.
                 val ownTarget = matches(group?.owner?.deviceName) || matches(group?.networkName) ||
                     (targetAddress != null && group?.owner?.deviceAddress == targetAddress)
@@ -197,16 +204,28 @@ class WifiDirectClient(
                     listener.onUnavailable()
                     return@requestGroupInfo
                 }
-                connected(info)
+                connected(info, group)
             }
         }
     }
 
-    private fun connected(info: WifiP2pInfo) {
+    private fun connected(info: WifiP2pInfo, group: WifiP2pGroup?) {
         val host = info.groupOwnerAddress?.hostAddress ?: return
         connectingAt = null
         connectTimeoutJob?.cancel()
         joinedTarget = true
+        if (requireClientRole) {
+            val link = runCatching {
+                val name = group?.getInterface()
+                val addresses = name?.let { NetworkInterface.getByName(it)?.interfaceAddresses }
+                    ?.map { it.address to it.networkPrefixLength.toInt() } ?: emptyList()
+                P2pLink.select(host, name, addresses)
+            }.getOrNull()
+            if (connectedLink != link) {
+                connectedLink = link
+                listener.onNetworkChanged(link)
+            }
+        }
         if (connectedHost == host) return
         connectedHost = host
         channel?.let { manager?.stopPeerDiscovery(it, null) }
@@ -214,6 +233,10 @@ class WifiDirectClient(
     }
 
     private fun disconnected() {
+        if (connectedLink != null) {
+            connectedLink = null
+            listener.onNetworkChanged(null)
+        }
         if (connectedHost == null) return // Intermediate broadcasts must not cancel an invitation.
         connectedHost = null
         joinedTarget = false
@@ -230,6 +253,7 @@ class WifiDirectClient(
         val ch = channel ?: return
         removeGroup(ch)
         connectedHost = null
+        connectedLink = null
         joinedTarget = false
         connectingAt = null
         targetAddress = null
@@ -255,6 +279,7 @@ class WifiDirectClient(
         }
         channel = null
         connectedHost = null
+        connectedLink = null
         joinedTarget = false
         connectingAt = null
     }

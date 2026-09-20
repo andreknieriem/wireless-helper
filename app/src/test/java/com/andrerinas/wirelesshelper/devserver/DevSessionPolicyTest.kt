@@ -1,77 +1,118 @@
 package com.andrerinas.wirelesshelper.devserver
 
-import com.andrerinas.wirelesshelper.devserver.DevSessionPolicy.Action.*
+import com.andrerinas.wirelesshelper.net.P2pLink
 import org.junit.Assert.*
 import org.junit.Test
 
 class DevSessionPolicyTest {
-    private val ready = DevServerState(true, listOf(DevServerSocket("0.0.0.0", "0.0.0.0", "0A")))
-    private val connected = DevServerState(true, ready.sockets + DevServerSocket("10.42.0.2", "10.42.0.1", "01"))
-    private val stopped = DevServerState(false, emptyList())
-    private fun policy() = DevSessionPolicy().apply { onPeer("10.42.0.1", 0) }
+    private val peer = P2pLink("192.0.2.1", "192.0.2.2", "p2p-test")
+    private fun policy() = DevSessionPolicy().apply { onPeer(peer, 0) }
 
-    @Test fun establishedTcpIsNeverRestartedByIdleTimer() {
+    @Test fun onlyOneAttemptAndNoIdleRestartOfHealthyBridge() {
         val policy = policy()
-        for (time in 0L..600_000L step 1000) assertEquals(NONE, policy.action(time, connected))
+        val token = policy.beginAttempt(0)!!
+        policy.connected(token, 1)
+        for (time in 0L..600_000L step 1000) assertNull(policy.beginAttempt(time))
+        assertTrue(policy.isCurrent(token))
+        assertFalse(policy.restartRequired)
     }
 
-    @Test fun tcpLossHasTwoSecondGraceAndReturnCancelsRecovery() {
+    @Test fun retryBackoffIsBoundedAndDuplicateEventsDoNotResetIt() {
         val policy = policy()
-        policy.action(0, connected)
-        assertEquals(NONE, policy.action(1000, ready))
-        assertEquals(NONE, policy.action(2999, ready))
-        assertEquals(RESTART, policy.action(3000, ready))
-        assertEquals(NONE, policy.action(3000, connected))
-        assertEquals(NONE, policy.action(3001, ready))
+        var now = 0L
+        for (delay in listOf(2000L, 4000L, 8000L, 16_000L, 30_000L, 60_000L, 60_000L)) {
+            val token = policy.beginAttempt(now)!!
+            policy.finished(token, now, recoverServer = false)
+            assertFalse(policy.onPeer(peer, now + 1))
+            assertNull(policy.beginAttempt(now + delay - 1))
+            assertFalse(policy.restartRequired) // Unavailable head unit never cycles AA.
+            now += delay
+        }
+        assertNotNull(policy.beginAttempt(now))
     }
 
-    @Test fun idleRetryBacksOffToSixtySeconds() {
+    @Test fun sixtySecondsOfContinuousBridgeResetsBackoff() {
         val policy = policy()
-        assertEquals(NONE, policy.action(29_999, ready))
-        assertEquals(RESTART, policy.action(30_000, ready))
-        policy.attempted(30_000)
-        assertEquals(NONE, policy.action(89_999, ready))
-        assertEquals(RESTART, policy.action(90_000, ready))
-        policy.attempted(90_000)
-        assertEquals(RESTART, policy.action(150_000, ready))
+        policy.finished(policy.beginAttempt(0)!!, 0, recoverServer = true)
+        assertTrue(policy.restartRequired)
+        policy.serverRecovered()
+        assertFalse(policy.restartRequired)
+        val token = policy.beginAttempt(2000)!!
+        policy.connected(token, 2000)
+        policy.finished(token, 62_000, recoverServer = true)
+        assertNull(policy.beginAttempt(63_999))
+        assertNotNull(policy.beginAttempt(64_000))
     }
 
-    @Test fun lossOfP2pStopsAfterFiveSecondsThenRestartsOnReturn() {
+    @Test fun foreignSessionWaitDoesNotConsumeRetryBudget() {
+        val policy = policy()
+        repeat(5) { index ->
+            val now = index * 2000L
+            policy.waitForOtherSession(policy.beginAttempt(now)!!, now)
+            assertNull(policy.beginAttempt(now + 1999))
+        }
+        val token = policy.beginAttempt(10_000)!!
+        policy.finished(token, 10_000, recoverServer = false)
+        assertNotNull(policy.beginAttempt(12_000))
+    }
+
+    @Test fun p2pLossInvalidatesOldAttemptEvenIfSameGroupReturns() {
+        val policy = policy()
+        val old = policy.beginAttempt(0)!!
+        policy.onPeer(null, 1000)
+        assertFalse(policy.isCurrent(old))
+        assertFalse(policy.shouldStopServer(5999))
+        assertTrue(policy.shouldStopServer(6000))
+        policy.onPeer(peer, 6001)
+        assertFalse(policy.shouldStopServer(6002))
+        assertNull(policy.beginAttempt(6002)) // Old IO must finish first.
+        policy.finished(old, 6002, recoverServer = true, failed = false)
+        val next = policy.beginAttempt(6002)!!
+        assertNotEquals(old, next)
+        assertFalse(policy.isCurrent(old))
+    }
+
+    @Test fun briefLossAndRepeatedLossEventsDoNotExtendGrace() {
         val policy = policy()
         policy.onPeer(null, 1000)
-        assertEquals(NONE, policy.action(5999, connected))
-        assertEquals(STOP, policy.action(6000, connected))
-        policy.attempted(6000)
-        assertEquals(NONE, policy.action(7000, stopped))
-        policy.onPeer("10.42.0.1", 8000)
-        assertEquals(START, policy.action(8000, stopped))
+        policy.onPeer(null, 5000)
+        assertTrue(policy.shouldStopServer(6000))
+        policy.onPeer(peer, 6001)
+        policy.onPeer(null, 7000)
+        policy.onPeer(peer, 11_999)
+        assertFalse(policy.shouldStopServer(12_000))
     }
 
-    @Test fun briefP2pLossDoesNotStopServer() {
+    @Test fun addressOrInterfaceChangeInvalidatesAttempt() {
         val policy = policy()
-        policy.onPeer(null, 1000)
-        policy.onPeer("10.42.0.1", 5999)
-        assertEquals(NONE, policy.action(6000, connected))
+        val token = policy.beginAttempt(0)!!
+        assertTrue(policy.onPeer(peer.copy(localAddress = "192.0.2.3"), 1))
+        assertFalse(policy.isCurrent(token))
     }
 
-    @Test fun failuresAreDelayedButAnEstablishedConnectionAlwaysWins() {
+    @Test fun stopBlocksAllLateCallbacksAndRetries() {
         val policy = policy()
-        policy.attempted(1000, failed = true)
-        assertEquals(NONE, policy.action(30_999, stopped))
-        assertEquals(START, policy.action(31_000, stopped))
-        assertEquals(NONE, policy.action(31_000, connected))
-        assertEquals(NONE, policy.action(300_000, connected))
+        val token = policy.beginAttempt(0)!!
+        policy.stop()
+        policy.finished(token, 1, recoverServer = true)
+        assertFalse(policy.onPeer(peer, 2))
+        policy.connected(token, 3)
+        assertFalse(policy.isCurrent(token))
+        assertNull(policy.beginAttempt(600_000))
+        assertFalse(policy.shouldStopServer(600_000))
     }
 
-    @Test fun duplicatePeerEventsDoNotResetIdleDeadline() {
+    @Test fun retryOnSameNetworkRejectsPreviousAttemptCallbacks() {
         val policy = policy()
-        policy.onPeer("10.42.0.1", 29_000)
-        assertEquals(RESTART, policy.action(30_000, ready))
-    }
-
-    @Test fun connectionToAnotherPeerIsNotInterrupted() {
-        assertEquals(NONE, policy().action(300_000,
-            DevServerState(true, listOf(DevServerSocket("192.168.1.2", "192.168.1.1", "01")))))
+        val old = policy.beginAttempt(0)!!
+        policy.finished(old, 0, recoverServer = false)
+        val next = policy.beginAttempt(2000)!!
+        assertNotEquals(old, next)
+        policy.connected(old, 2001)
+        policy.finished(old, 2002, recoverServer = true)
+        assertTrue(policy.isCurrent(next))
+        assertFalse(policy.restartRequired)
+        assertNull(policy.beginAttempt(5000))
     }
 
     @Test fun bluetoothBounceCancelsStop() {

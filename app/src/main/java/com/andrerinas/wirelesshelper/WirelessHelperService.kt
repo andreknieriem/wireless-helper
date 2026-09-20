@@ -228,6 +228,8 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
             StrategyWifiDirectDevServer.Status.SEARCHING -> R.string.dev_searching
             StrategyWifiDirectDevServer.Status.P2P_CONNECTED -> R.string.dev_p2p_connected
             StrategyWifiDirectDevServer.Status.SERVER_READY -> R.string.dev_ready
+            StrategyWifiDirectDevServer.Status.WAITING_SERVER -> R.string.dev_waiting_server
+            StrategyWifiDirectDevServer.Status.CONNECTING -> R.string.dev_connecting
             StrategyWifiDirectDevServer.Status.TCP_CONNECTED -> R.string.dev_tcp_connected
             StrategyWifiDirectDevServer.Status.RECOVERING -> R.string.dev_recovering
             StrategyWifiDirectDevServer.Status.STOPPING -> R.string.dev_stopping

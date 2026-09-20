@@ -2,6 +2,8 @@ package com.andrerinas.wirelesshelper.devserver
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.net.InetAddress
+import java.net.Inet6Address
 
 class DevServerStateTest {
     @Test fun syntheticStartAndStopSnapshots() {
@@ -65,8 +67,8 @@ class DevServerStateTest {
     @Test fun decodesIpv4ClientAndListener() {
         val sockets = DevServerState.parseSockets(row("0231A8C0", "0131A8C0", "01"), 10123)
         assertEquals("192.168.49.2", sockets.single().localAddress)
-        assertTrue(DevServerState(true, sockets).connectedTo("192.168.49.1"))
-        assertFalse(DevServerState(true, sockets).connectedTo("192.168.1.1"))
+        assertEquals("192.168.49.1", sockets.single().remoteAddress)
+        assertEquals(49153, sockets.single().remotePort)
     }
 
     @Test fun decodesIpv6AndMappedIpv4() {
@@ -75,7 +77,7 @@ class DevServerStateTest {
                 row("0000000000000000FFFF00000231A8C0", "0000000000000000FFFF00000131A8C0", "01"), 10123)
         assertEquals(2, sockets.size)
         assertTrue(DevServerState(true, sockets).ready)
-        assertTrue(DevServerState(true, sockets).connectedTo("192.168.49.1"))
+        assertEquals("192.168.49.1", sockets.last().remoteAddress)
     }
 
     @Test fun acceptsBigEndianProcWords() {
@@ -84,8 +86,8 @@ class DevServerStateTest {
         assertEquals("192.168.49.1", sockets.single().remoteAddress)
     }
 
-    @Test fun loopbackOnlyAndServiceWithoutListenerAreNotReady() {
-        assertFalse(DevServerState(true, DevServerState.parseSockets(row("0100007F"), 10123)).ready)
+    @Test fun loopbackIsReadyButMissingServiceOrListenerIsNot() {
+        assertTrue(DevServerState(true, DevServerState.parseSockets(row("0100007F"), 10123)).ready)
         assertFalse(DevServerState(true, emptyList()).ready)
         assertFalse(DevServerState(false, listOf(DevServerSocket("0.0.0.0", "0.0.0.0", "0A"))).ready)
     }
@@ -93,5 +95,39 @@ class DevServerStateTest {
     @Test fun timeWaitDoesNotPreventConfirmedStop() {
         assertTrue(DevServerState(false, listOf(DevServerSocket("192.168.49.2", "192.168.49.1", "06"))).stopped)
         assertFalse(DevServerState(true, emptyList()).stopped)
+    }
+
+    @Test fun wildcardAndLoopbackEndpointsStayOnPhone() {
+        for ((listener, expected) in listOf("0.0.0.0" to "127.0.0.1", "::" to "::1", "::1" to "::1", "127.0.0.1" to "127.0.0.1")) {
+            val state = DevServerState(true, listOf(DevServerSocket(listener, "::", "0A")))
+            assertEquals(InetAddress.getByName(expected), state.localEndpoint(emptySet()))
+        }
+    }
+
+    @Test fun specificEndpointMustBelongToPhoneAndIpv4IsPreferred() {
+        val address = InetAddress.getByName("192.0.2.2")
+        val state = DevServerState(true, listOf(DevServerSocket(address.hostAddress!!, "0.0.0.0", "0A")))
+        assertNull(state.localEndpoint(emptySet()))
+        assertEquals(address, state.localEndpoint(setOf(address)))
+        val dual = DevServerState(true, listOf(DevServerSocket("::", "::", "0A"), DevServerSocket("0.0.0.0", "0.0.0.0", "0A")))
+        assertEquals(InetAddress.getByName("127.0.0.1"), dual.localEndpoint(emptySet()))
+    }
+
+    @Test fun ownConnectionIsIdentifiedByFullTupleNotJustLoopback() {
+        val owned = DevServerConnection("127.0.0.1", "127.0.0.1", 40000)
+        val socket = DevServerSocket("127.0.0.1", "127.0.0.1", "01", 40000)
+        assertFalse(DevServerState(true, listOf(socket)).hasOtherConnection(owned))
+        assertTrue(DevServerState(true, listOf(socket)).hasOtherConnection(null))
+        assertTrue(DevServerState(true, listOf(socket.copy(remotePort = 40001))).hasOtherConnection(owned))
+        assertTrue(DevServerState(true, listOf(socket.copy(localAddress = "192.0.2.2"))).hasOtherConnection(owned))
+    }
+
+    @Test fun specificIpv6KeepsInterfaceScopeAndOwnershipMatchesProcAddress() {
+        val raw = InetAddress.getByName("fe80::2")
+        val scoped = Inet6Address.getByAddress(null, raw.address, 2)
+        val state = DevServerState(true, listOf(DevServerSocket(raw.hostAddress!!, "::", "0A")))
+        assertSame(scoped, state.localEndpoint(setOf(scoped)))
+        val owned = DevServerConnection(scoped.hostAddress!!, scoped.hostAddress!!, 40000)
+        assertTrue(owned.matches(DevServerSocket(raw.hostAddress!!, raw.hostAddress!!, "01", 40000)))
     }
 }

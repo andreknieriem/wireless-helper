@@ -2,19 +2,36 @@ package com.andrerinas.wirelesshelper.devserver
 
 import java.net.InetAddress
 
-data class DevServerSocket(val localAddress: String, val remoteAddress: String, val state: String) {
+data class DevServerSocket(val localAddress: String, val remoteAddress: String, val state: String, val remotePort: Int = 0) {
     val listening: Boolean get() = state == "0A"
     val established: Boolean get() = state == "01"
+}
+
+data class DevServerConnection(val localAddress: String, val remoteAddress: String, val remotePort: Int) {
+    fun matches(socket: DevServerSocket): Boolean = remotePort == socket.remotePort &&
+        sameAddress(localAddress, socket.localAddress) && sameAddress(remoteAddress, socket.remoteAddress)
+
+    private fun sameAddress(left: String, right: String): Boolean =
+        InetAddress.getByName(left).address.contentEquals(InetAddress.getByName(right).address)
 }
 
 data class DevServerState(val serviceRunning: Boolean, val sockets: List<DevServerSocket>) {
     val hasConnection: Boolean get() = sockets.any { it.established }
     val stopped: Boolean get() = !serviceRunning && sockets.none { it.listening || it.established }
-    val ready: Boolean get() = serviceRunning && sockets.any {
-        it.listening && !InetAddress.getByName(it.localAddress).isLoopbackAddress
-    }
+    val ready: Boolean get() = serviceRunning && sockets.any { it.listening }
 
-    fun connectedTo(host: String): Boolean = sockets.any { it.established && it.remoteAddress == host }
+    fun hasOtherConnection(owned: DevServerConnection?): Boolean = sockets.any { it.established && owned?.matches(it) != true }
+
+    fun localEndpoint(localAddresses: Set<InetAddress>): InetAddress? = sockets.asSequence()
+        .filter { it.listening }.mapNotNull { socket ->
+            val address = InetAddress.getByName(socket.localAddress)
+            when {
+                address.isAnyLocalAddress -> InetAddress.getByName(if (address.address.size == 4) "127.0.0.1" else "::1")
+                address.isLoopbackAddress -> address
+                // Keep the interface scope of a concrete IPv6 address; /proc omits it.
+                else -> localAddresses.firstOrNull { it == address }
+            }
+        }.sortedBy { it.address.size }.firstOrNull()
 
     companion object {
         /** Ignore ANR history and destroyed records; neither proves a live server. */
@@ -59,7 +76,8 @@ data class DevServerState(val serviceRunning: Boolean, val sockets: List<DevServ
                 if (fields[1].substringAfterLast(':').toIntOrNull(16) != 5277) return@mapNotNull null
                 val local = decodeAddress(fields[1].substringBeforeLast(':'), littleEndian)
                 val remote = decodeAddress(fields[2].substringBeforeLast(':'), littleEndian)
-                if (local == null || remote == null) null else DevServerSocket(local, remote, fields[3])
+                val remotePort = fields[2].substringAfterLast(':').toIntOrNull(16)
+                if (local == null || remote == null || remotePort == null) null else DevServerSocket(local, remote, fields[3], remotePort)
             }.toList()
 
         private fun decodeAddress(hex: String, littleEndian: Boolean): String? = runCatching {

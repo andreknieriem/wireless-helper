@@ -1,56 +1,62 @@
 package com.andrerinas.wirelesshelper.devserver
 
+import com.andrerinas.wirelesshelper.net.P2pLink
+
+/** Main-thread session decisions, independent of root polling and socket IO. */
 class DevSessionPolicy {
-    enum class Action { NONE, START, STOP, RESTART }
-    private var host: String? = null
+    private var stopped = false
+    private var peer: P2pLink? = null
+    private var epoch = 0L
+    private var attemptEpoch = 0L
+    private var nextToken = 0L
+    private var attempt: Long? = null
+    private var connectedAt: Long? = null
     private var lostAt: Long? = null
-    private var waitingSince = 0L
-    private var tcpWasConnected = false
-    private var tcpLostAt: Long? = null
-    private var retryDelay = 30_000L
-    private var retryAfter = 0L
+    private var retryAt = 0L
+    private var failureCount = 0
+    var restartRequired = false
+        private set
 
-    fun onPeer(host: String?, now: Long) {
-        if (this.host == host) return
-        this.host = host
-        lostAt = if (host == null) now else null
-        waitingSince = now
-        tcpWasConnected = false
-        tcpLostAt = null
-        retryAfter = 0
-        retryDelay = 30_000
+    fun onPeer(peer: P2pLink?, now: Long): Boolean {
+        if (stopped || this.peer == peer) return false
+        this.peer = peer
+        epoch++
+        lostAt = if (peer == null) now else null
+        return true
     }
 
-    fun action(now: Long, state: DevServerState): Action {
-        val peer = host
-        if (peer == null) {
-            return if (lostAt?.let { now - it >= 5000 } == true && !state.stopped) Action.STOP else Action.NONE
-        }
-        if (state.connectedTo(peer)) {
-            tcpWasConnected = true
-            tcpLostAt = null
-            waitingSince = now
-            retryDelay = 30_000
-            retryAfter = 0
-            return Action.NONE
-        }
-        // A connection to another peer is still an active AA session; never cycle underneath it.
-        if (state.hasConnection || now < retryAfter) return Action.NONE
-        if (tcpWasConnected) {
-            if (tcpLostAt == null) tcpLostAt = now
-            return if (now - tcpLostAt!! >= 2000) Action.RESTART else Action.NONE
-        }
-        if (!state.ready) return Action.START
-        return if (now - waitingSince >= retryDelay) Action.RESTART else Action.NONE
+    fun beginAttempt(now: Long): Long? {
+        if (stopped || peer == null || attempt != null || now < retryAt) return null
+        attemptEpoch = epoch
+        return (++nextToken).also { attempt = it; connectedAt = null }
     }
 
-    fun attempted(now: Long, failed: Boolean = false) {
-        tcpWasConnected = false
-        tcpLostAt = null
-        waitingSince = now
-        retryAfter = if (failed) now + retryDelay else 0
-        retryDelay = minOf(retryDelay * 2, 60_000)
+    fun isCurrent(token: Long): Boolean = !stopped && peer != null && attemptEpoch == epoch && attempt == token
+    fun connected(token: Long, now: Long) { if (isCurrent(token)) connectedAt = now }
+
+    fun finished(token: Long, now: Long, recoverServer: Boolean, failed: Boolean = true) {
+        if (attempt != token) return
+        attempt = null
+        restartRequired = restartRequired || recoverServer
+        if (connectedAt?.let { now - it >= 60_000 } == true) failureCount = 0
+        connectedAt = null
+        if (failed) {
+            val delays = longArrayOf(2000, 4000, 8000, 16_000, 30_000, 60_000)
+            retryAt = now + delays[failureCount.coerceAtMost(delays.lastIndex)]
+            failureCount = (failureCount + 1).coerceAtMost(delays.lastIndex)
+        }
     }
+
+    fun waitForOtherSession(token: Long, now: Long) {
+        finished(token, now, recoverServer = false, failed = false)
+        retryAt = now + 2000
+    }
+
+    fun shouldStopServer(now: Long): Boolean = !stopped && peer == null &&
+        lostAt?.let { now - it >= 5000 } == true
+
+    fun serverRecovered() { restartRequired = false }
+    fun stop() { stopped = true; epoch++ }
 }
 
 class BluetoothStopPolicy(private val graceMs: Long = 5000) {

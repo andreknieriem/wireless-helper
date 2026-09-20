@@ -1,15 +1,17 @@
 <resources>
     <string name="dev_error_wifi">Не удалось включить Wi-Fi. Включите его и повторите запуск.</string>
-    <string name="dev_session_hint">TCP-соединение не подтверждает полноценный сеанс Android Auto. Проверьте проекцию на голове.</string>
+    <string name="dev_session_hint">Подключённый мост означает, что открыты оба TCP-соединения, но не подтверждает полноценный сеанс Android Auto. Проверьте проекцию на голове.</string>
     <string name="mode_wifi_direct_dev_root">Wi-Fi Direct · Dev сервер (root)</string>
-    <string name="dev_mode_hint">Нужны root и первоначальная настройка разработчика Android Auto. В Open Headunit выберите Headunit Server → Auto и включите автоматический Wi-Fi Direct. Режим управляет сервером, в том числе запущенным вручную. Восстановление автоматическое; Stop или 5 секунд без выбранных Bluetooth-устройств выключают сервер.</string>
+    <string name="dev_mode_hint">Нужны root и первоначальная настройка разработчика Android Auto. На голове выберите Wireless Helper → Wi-Fi Direct; специальная сборка ГУ и галочка Dev сервера не нужны. Хелпер соединяет локальный Dev сервер с головой и управляет сервером, в том числе запущенным вручную. Восстановление автоматическое, даже после Exit на ГУ. Stop в хелпере или 5 секунд без выбранных Bluetooth-устройств выключают сервер.</string>
     <string name="dev_checking_root">Проверка root-доступа…</string>
     <string name="dev_starting">Запуск Dev сервера…</string>
     <string name="dev_searching">Режим Dev сервера: поиск OpenHU…</string>
     <string name="dev_p2p_connected">Wi-Fi Direct подключён; подготовка Dev сервера…</string>
     <string name="dev_ready">Wi-Fi Direct подключён; Dev сервер готов</string>
-    <string name="dev_tcp_connected">TCP-соединение с Dev сервером установлено</string>
-    <string name="dev_tcp_label">TCP подключён</string>
+    <string name="dev_waiting_server">Dev сервер занят другим соединением; ожидание…</string>
+    <string name="dev_connecting">Подключение моста к голове…</string>
+    <string name="dev_tcp_connected">Мост подключён: Dev сервер ↔ ГУ</string>
+    <string name="dev_tcp_label">Мост подключён</string>
     <string name="dev_recovering">Восстановление соединения с Dev сервером…</string>
     <string name="dev_stopping">Остановка Dev сервера…</string>
     <string name="dev_stopped">Dev сервер остановлен</string>
@@ -18,6 +20,7 @@
     <string name="dev_error_component">В этой версии Android Auto не найден ожидаемый компонент Dev сервера.</string>
     <string name="dev_error_state">Не удалось прочитать состояние Dev сервера через root или истекло время команды.</string>
     <string name="dev_error_start">Dev сервер не открыл доступный порт TCP 5277. Проверьте настройки разработчика Android Auto.</string>
+    <string name="dev_error_endpoint">Dev сервер не слушает доступный локальный адрес телефона. Перезапустите сервер и повторите попытку.</string>
     <string name="dev_error_stop">Не удалось подтвердить выключение Dev сервера. Остановите его в Android Auto; при следующем запуске очистка повторится.</string>
-    <string name="dev_aa174_notice">Android Auto 17.4+ блокирует прежний запуск через Wireless Helper. На телефоне с root используйте Wi-Fi Direct · Dev сервер (root), а в Open Headunit выберите Headunit Server → Auto и автоматический Wi-Fi Direct. Без root запустите сервер вручную в настройках Android Auto или используйте поддерживаемое Native-подключение.</string>
+    <string name="dev_aa174_notice">Android Auto 17.4+ блокирует прежний запуск через Wireless Helper. На телефоне с root используйте Wi-Fi Direct · Dev сервер (root), а на голове выберите Wireless Helper → Wi-Fi Direct. Хелпер соединит Dev сервер с обычным входом Helper на ГУ. Без root используйте вручную запущенный сервер с режимом Headunit Server или поддерживаемое Native-подключение.</string>
 </resources>

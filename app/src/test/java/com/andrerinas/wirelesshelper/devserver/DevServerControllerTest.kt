@@ -11,6 +11,7 @@ class DevServerControllerTest {
         val calls = mutableListOf<String>()
         var running = false
         var listening = false
+        var listenerAddress = "00000000"
         var stopWorks = true
         var startWorks = true
         var root = true
@@ -34,7 +35,7 @@ class DevServerControllerTest {
                 }
                 DevServerController.SOCKETS_COMMAND -> RootCommandResult(if (readable) 0 else 1,
                     if (!readable) "Permission denied" else "sl local_address rem_address\n" +
-                        if (listening) "0: 00000000:149D 00000000:0000 0A 00000000:00000000 00:00000000 00000000 10123 0 1" else "")
+                        if (listening) "0: $listenerAddress:149D 00000000:0000 0A 00000000:00000000 00:00000000 00000000 10123 0 1" else "")
                 DevServerController.STATE_COMMAND -> RootCommandResult(0,
                     "ACTIVITY MANAGER SERVICES (dumpsys activity services)\n" +
                         (if (anrHistory) "  Last ANR service:\n    ServiceRecord{old u0 ${DevServerController.COMPONENT}}\n" else "") +
@@ -73,6 +74,15 @@ class DevServerControllerTest {
         DevServerController(shell, 10123, 36).stop()
         assertFalse(shell.running)
         assertEquals(DevServerController.STOP_COMMAND, shell.calls.first())
+    }
+
+    @Test fun adoptsLoopbackServerWithoutRestartingIt() = runTest {
+        val shell = Shell().apply { running = true; listening = true; listenerAddress = "0100007F" }
+        val controller = DevServerController(shell, 10123, 36)
+        assertTrue(controller.start().ready)
+        assertFalse(shell.calls.any { it.startsWith("am ") })
+        controller.stop()
+        assertTrue(controller.readState().stopped)
     }
 
     @Test fun startExitZeroIsNotReadiness() = runTest {

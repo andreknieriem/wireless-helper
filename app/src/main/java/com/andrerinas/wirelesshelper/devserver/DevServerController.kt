@@ -10,7 +10,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.nio.ByteOrder
 
-enum class DevServerError { ROOT_DENIED, AA_MISSING, COMPONENT_MISSING, WIFI_UNAVAILABLE, STATE_UNAVAILABLE, START_FAILED, STOP_FAILED }
+enum class DevServerError { ROOT_DENIED, AA_MISSING, COMPONENT_MISSING, WIFI_UNAVAILABLE, STATE_UNAVAILABLE, START_FAILED, STOP_FAILED, LOCAL_ENDPOINT_UNAVAILABLE }
 class DevServerException(val error: DevServerError) : Exception(error.name)
 
 fun devCleanupError(cause: Exception): DevServerError = when (cause) {

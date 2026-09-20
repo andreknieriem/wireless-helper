@@ -46,4 +46,5 @@ fun devErrorResource(error: DevServerError): Int = when (error) {
     DevServerError.STATE_UNAVAILABLE -> com.andrerinas.wirelesshelper.R.string.dev_error_state
     DevServerError.START_FAILED -> com.andrerinas.wirelesshelper.R.string.dev_error_start
     DevServerError.STOP_FAILED -> com.andrerinas.wirelesshelper.R.string.dev_error_stop
+    DevServerError.LOCAL_ENDPOINT_UNAVAILABLE -> com.andrerinas.wirelesshelper.R.string.dev_error_endpoint
 }
