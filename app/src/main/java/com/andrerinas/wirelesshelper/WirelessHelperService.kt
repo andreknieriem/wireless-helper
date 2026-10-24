@@ -22,6 +22,7 @@ import com.andrerinas.wirelesshelper.strategy.StrategySharedNetwork
 import com.andrerinas.wirelesshelper.strategy.StrategyWifiDirect
 import com.andrerinas.wirelesshelper.net.WifiNetworkBinding
 import com.andrerinas.wirelesshelper.strategy.StrategyNearby
+import com.andrerinas.wirelesshelper.utils.AndroidAutoTriggerPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,17 +55,22 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
     override fun onCreate() {
         super.onCreate()
+        val androidAuto = androidAutoVersion()
+        if (AndroidAutoTriggerPolicy.acceptsAppTrigger(androidAuto) == false) {
+            Log.w(TAG, "Android Auto $androidAuto refuses a start request from this app (closed in 17.4), " +
+                "so a search here cannot end in a session. The head unit's Native mode connects this phone.")
+        }
         setupLocks()
         createNotificationChannel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 1,
-                createNotification(getString(R.string.notif_searching)),
+                createNotification(searchingText()),
                 android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
             )
         } else {
             @Suppress("DEPRECATION")
-            startForeground(1, createNotification(getString(R.string.notif_searching)))
+            startForeground(1, createNotification(searchingText()))
         }
     }
 
@@ -124,7 +130,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
                         delay(1000)
                     }
                     if (isActive) {
-                        updateNotification(getString(R.string.notif_searching))
+                        updateNotification(searchingText())
                     }
                 }
             }
@@ -190,7 +196,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
         if (autoReconnect && anyTargetConnected) {
             Log.i(TAG, "Target Bluetooth still connected and auto-reconnect enabled. Restarting strategy...")
             acquireWakeLock(10 * 60 * 1000L) // 10 minutes timeout during reconnect scan
-            updateNotification(getString(R.string.notif_searching))
+            updateNotification(searchingText())
             reconnectJob = serviceScope.launch {
                 delay(3000) // Buffer vor Neustart
                 startSelectedStrategy()
@@ -229,7 +235,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
     override fun onLaunchTimeout() {
         Log.i(TAG, "Launch timeout. Resuming discovery.")
-        updateNotification(getString(R.string.notif_searching))
+        updateNotification(searchingText())
         updateAllUIs()
         
         // Restart the strategy to resume searching
@@ -293,6 +299,31 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
         }
     }
 
+    /**
+     * The notification line while searching. A phone whose Android Auto refuses this app's start
+     * request cannot get a session out of the search, so there it says that instead.
+     */
+    private fun searchingText(): String {
+        val androidAuto = androidAutoVersion()
+        return if (AndroidAutoTriggerPolicy.acceptsAppTrigger(androidAuto) == false) {
+            getString(R.string.notif_aa_refuses_start, AndroidAutoTriggerPolicy.release(androidAuto))
+        } else {
+            getString(R.string.notif_searching)
+        }
+    }
+
+    private fun androidAutoVersion(): String? = try {
+        val gearhead = "com.google.android.projection.gearhead"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getPackageInfo(gearhead, android.content.pm.PackageManager.PackageInfoFlags.of(0)).versionName
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(gearhead, 0).versionName
+        }
+    } catch (e: Exception) {
+        null
+    }
+
     private fun updateNotification(content: String) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(1, createNotification(content))
@@ -307,6 +338,7 @@ class WirelessHelperService : Service(), BaseStrategy.StateListener {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name)).setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setSmallIcon(R.drawable.ic_wireless_helper).setOngoing(true)
             .setContentIntent(pendingContent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.notif_stop), pendingStop)

@@ -103,6 +103,7 @@
 
     <!-- Notifications & Service -->
     <string name="notif_searching">Searching for Headunit…</string>
+    <string name="notif_aa_refuses_start">Android Auto %1$s won\'t start from this app. Use Native mode on the head unit.</string>
     <string name="notif_connecting">Found…</string>
     <string name="notif_connected">Connected to Android Auto</string>
     <string name="notif_disconnected">Android Auto disconnected</string>
